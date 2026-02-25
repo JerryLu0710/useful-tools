@@ -1,0 +1,3 @@
+[submodule ".ai-standard"]
+	path = .ai-standard
+	url = https://github.com/JerryLu0710/ai-standard

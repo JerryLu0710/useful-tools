@@ -1,0 +1,101 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "chinese_converter",
+    "anime1_downloader",
+    "image_tool",
+    "ytmusic_dl",
+    "novel_scraper",
+    "utils",
+]
+
+[project]
+name = "useful-tools"
+version = "0.1.0"
+description = "A collection of useful tools."
+requires-python = ">=3.10"
+# Core dependencies needed by all tools
+dependencies = [
+    "python-dotenv>=1.0.0",
+]
+
+[dependency-groups]
+# Development dependencies
+dev = [
+    "ruff>=0.14.3",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+# Dependencies for the chinese_converter tool
+chinese_converter = [
+    "opencc-python-reimplemented~=0.1.7",
+    "lxml>=4.9.0",
+    "ebooklib>=0.18",
+    "beautifulsoup4>=4.11.0",
+]
+
+# Dependencies for the anime1_downloader tool
+anime1_downloader = [
+    "requests",
+    "beautifulsoup4",
+    "lxml",
+    "yt-dlp",
+]
+
+# Dependencies for the image_tool
+image_tool = [
+    "opencv-python",
+]
+
+# Dependencies for the ytmusic_dl tool
+ytmusic_dl = [
+    "yt-dlp",
+    "mutagen",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "A"]
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+ignore = [
+  "E501", # line too long, handled by black
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "anime1_downloader/tests",
+    "chinese_converter/tests",
+    "ytmusic_dl/tests",
+]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = [
+    "anime1_downloader",
+    "chinese_converter",
+    "ytmusic_dl",
+]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
