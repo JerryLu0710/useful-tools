@@ -27,10 +27,10 @@ To promote code reuse and consistency, the project includes the following shared
 
 ### 1.4. Dependency Management
 
-Dependencies are managed in `pyproject.toml`. Each utility has its own optional dependency group, allowing for a lean installation tailored to the user's needs. For example, to install the dependencies for the `chinese_converter` utility, one would run:
+Dependencies are managed in `pyproject.toml`. Each utility has its own dependency group, allowing for a lean installation tailored to the user's needs. For example, to install the dependencies for the `chinese_converter` utility, one would run:
 
 ```bash
-uv pip install -e '.[chinese_converter]'
+uv sync --group chinese_converter
 ```
 
 ## 2. Coding Standards and Practices

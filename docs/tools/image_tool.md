@@ -32,7 +32,7 @@ Add these settings to your `.env` file (all optional):
 The tool provides three subcommands:
 
 ```bash
-python -m image_tool <subcommand> [options]
+uv run python -m image_tool <subcommand> [options]
 ```
 
 ---
@@ -44,7 +44,7 @@ View an image and mark coordinates by clicking.
 ### Usage
 
 ```bash
-python -m image_tool coords <image_path> [--ratio RATIO]
+uv run python -m image_tool coords <image_path> [--ratio RATIO]
 ```
 
 ### Arguments
@@ -64,7 +64,7 @@ python -m image_tool coords <image_path> [--ratio RATIO]
 ### Example
 
 ```bash
-python -m image_tool coords "screenshot.png" --ratio 0.5
+uv run python -m image_tool coords "screenshot.png" --ratio 0.5
 ```
 
 **Use cases:**
@@ -81,7 +81,7 @@ Extract a specific frame from a video file.
 ### Usage
 
 ```bash
-python -m image_tool frame -v <video> -t <time> [-o <output>]
+uv run python -m image_tool frame -v <video> -t <time> [-o <output>]
 ```
 
 ### Arguments
@@ -97,7 +97,7 @@ python -m image_tool frame -v <video> -t <time> [-o <output>]
 Extract a frame at 1 minute 30 seconds:
 
 ```bash
-python -m image_tool frame \
+uv run python -m image_tool frame \
   -v "my_video.mp4" \
   -t 90 \
   -o "frames/"
@@ -119,7 +119,7 @@ Capture images from a camera device.
 ### Usage
 
 ```bash
-python -m image_tool capture [-c CAMERA] [-s SAVE_DIR]
+uv run python -m image_tool capture [-c CAMERA] [-s SAVE_DIR]
 ```
 
 ### Arguments
@@ -134,7 +134,7 @@ python -m image_tool capture [-c CAMERA] [-s SAVE_DIR]
 Capture from an external camera:
 
 ```bash
-python -m image_tool capture -c 1 -s "captures/"
+uv run python -m image_tool capture -c 1 -s "captures/"
 ```
 
 **Use cases:**

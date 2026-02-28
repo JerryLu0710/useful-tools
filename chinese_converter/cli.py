@@ -118,7 +118,10 @@ def _generate_default_output(input_path: str, is_batch: bool) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Convert Chinese text in various file formats")
+    parser = argparse.ArgumentParser(
+        prog="uv run python -m chinese_converter",
+        description="Convert Chinese text in various file formats",
+    )
     parser.add_argument("input", help="Input file or directory (.epub, .txt)")
     parser.add_argument("output", nargs="?", help="Output file or directory (optional)")
     parser.add_argument(

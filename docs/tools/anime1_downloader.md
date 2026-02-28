@@ -34,7 +34,7 @@ Videos are saved to: `<ANIME1_DOWNLOAD_DIR>/<anime_series_name>/`
 Run from the project root:
 
 ```bash
-python -m anime1_downloader <url> [options]
+uv run python -m anime1_downloader <url> [options]
 ```
 
 ### Arguments
@@ -51,7 +51,7 @@ python -m anime1_downloader <url> [options]
 > [!TIP]
 > Wrap URLs and cookie values in quotes to avoid shell parsing issues:
 > ```bash
-> python -m anime1_downloader "https://anime1.me/18305"
+> uv run python -m anime1_downloader "https://anime1.me/18305"
 > ```
 
 ## Examples
@@ -59,7 +59,7 @@ python -m anime1_downloader <url> [options]
 ### Download a Series
 
 ```bash
-python -m anime1_downloader "https://anime1.me/18305"
+uv run python -m anime1_downloader "https://anime1.me/18305"
 ```
 
 ### Extract URLs Only (No Download)
@@ -67,7 +67,7 @@ python -m anime1_downloader "https://anime1.me/18305"
 Useful for inspecting what would be downloaded:
 
 ```bash
-python -m anime1_downloader "https://anime1.me/18305" --extract
+uv run python -m anime1_downloader "https://anime1.me/18305" --extract
 ```
 
 ### Bypass Cloudflare Protection
@@ -75,14 +75,14 @@ python -m anime1_downloader "https://anime1.me/18305" --extract
 If you encounter Cloudflare challenges, extract the `cf_clearance` cookie from your browser:
 
 ```bash
-python -m anime1_downloader "https://anime1.me/18305" \
+uv run python -m anime1_downloader "https://anime1.me/18305" \
   --cloudflare "your_cf_clearance_cookie_value"
 ```
 
 ### Custom Output Directory
 
 ```bash
-python -m anime1_downloader "https://anime1.me/18305" \
+uv run python -m anime1_downloader "https://anime1.me/18305" \
   --output-dir "/custom/path" \
   --max-concurrent-downloads 8
 ```
@@ -111,7 +111,7 @@ python -m anime1_downloader "https://anime1.me/18305" \
 
 **Solution**: Increase concurrent downloads:
 ```bash
-python -m anime1_downloader "URL" -j 8
+uv run python -m anime1_downloader "URL" -j 8
 ```
 
 > [!CAUTION]

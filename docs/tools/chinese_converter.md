@@ -33,7 +33,7 @@ Add these settings to your `.env` file (all optional):
 Run from the project root:
 
 ```bash
-python -m chinese_converter <input> [output] [options]
+uv run python -m chinese_converter <input> [output] [options]
 ```
 
 ### Arguments
@@ -62,19 +62,19 @@ python -m chinese_converter <input> [output] [options]
 Converts `my_book.epub` to `my_book_trad.epub`:
 
 ```bash
-python -m chinese_converter "path/to/my_book.epub"
+uv run python -m chinese_converter "path/to/my_book.epub"
 ```
 
 ### Specify Output Location
 
 ```bash
-python -m chinese_converter "input.epub" "output/converted.epub"
+uv run python -m chinese_converter "input.epub" "output/converted.epub"
 ```
 
 ### Convert Traditional to Simplified
 
 ```bash
-python -m chinese_converter "traditional_book.txt" --type t2s
+uv run python -m chinese_converter "traditional_book.txt" --type t2s
 ```
 
 ### Batch Convert a Directory
@@ -82,13 +82,13 @@ python -m chinese_converter "traditional_book.txt" --type t2s
 Converts all `.epub` and `.txt` files from `books_simplified/` and saves them in `books_traditional/`:
 
 ```bash
-python -m chinese_converter "books_simplified" "books_traditional" --batch
+uv run python -m chinese_converter "books_simplified" "books_traditional" --batch
 ```
 
 ### Disable Backup
 
 ```bash
-python -m chinese_converter "my_file.epub" --no-backup
+uv run python -m chinese_converter "my_file.epub" --no-backup
 ```
 
 ## How It Works

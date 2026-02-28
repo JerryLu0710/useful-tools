@@ -1,7 +1,7 @@
 """CLI for image tools."""
 
 import argparse
-import os
+from pathlib import Path
 
 from image_tool import core
 from logger_setup import get_logger
@@ -12,7 +12,10 @@ logger = get_logger(__name__, "image_tool")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="A collection of image tools.")
+    parser = argparse.ArgumentParser(
+        prog="uv run python -m image_tool",
+        description="A collection of image tools.",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # Coords command
@@ -61,8 +64,8 @@ def main():
     if args.command == "coords":
         core.mark_coordinates(args.image_path, args.ratio)
     elif args.command == "frame":
-        if not os.path.exists(args.output):
-            os.makedirs(args.output)
+        output_dir = Path(args.output)
+        output_dir.mkdir(parents=True, exist_ok=True)
         try:
             output_path = core.extract_frame(args.video, args.time, args.output)
             logger.info(f"Frame at {args.time} seconds saved as {output_path}")

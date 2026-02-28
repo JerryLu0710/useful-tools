@@ -17,6 +17,7 @@ def setup_logger(log_level: str):
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
+        prog="uv run python -m ytmusic_dl",
         description="YouTube Music Downloader and Library Manager",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )

@@ -3,7 +3,7 @@ import argparse
 import concurrent.futures
 import json
 import logging
-import os
+import re
 from pathlib import Path
 
 import requests
@@ -16,6 +16,42 @@ from .history import append_to_history, create_history_entry, load_history
 
 # Setup project-wide logger
 logger = get_logger(__name__, "anime1_downloader")
+
+# Characters illegal in Windows filenames, mapped to fullwidth Unicode equivalents
+_ILLEGAL_FILENAME_CHARS = str.maketrans(
+    {
+        "/": "／",
+        "\\": "＼",
+        ":": "：",
+        "*": "＊",
+        "?": "？",
+        '"': "＂",
+        "<": "＜",
+        ">": "＞",
+        "|": "｜",
+    }
+)
+
+
+def sanitize_filename(name: str) -> str:
+    """Sanitize a string for use as a filename or directory name.
+
+    Replaces characters that are illegal in Windows/Linux filenames
+    with visually similar fullwidth Unicode equivalents.
+    Also strips leading/trailing whitespace and dots.
+
+    Args:
+        name: The raw name to sanitize.
+
+    Returns:
+        A sanitized string safe for use in file paths on all platforms.
+    """
+    sanitized = name.translate(_ILLEGAL_FILENAME_CHARS)
+    # Strip leading/trailing whitespace and dots (Windows disallows trailing dots)
+    sanitized = sanitized.strip().strip(".")
+    # Collapse multiple spaces into one
+    sanitized = re.sub(r"\s+", " ", sanitized)
+    return sanitized
 
 
 class Anime1Downloader:
@@ -154,15 +190,17 @@ class Anime1Downloader:
         all_cookies_str = f"e={e};h={h};p={p}"
         yt_dlp_cookie_dict = {"cookie": all_cookies_str}
 
-        final_output_dir = os.path.join(self.args.output_dir, anime_series_name)
-        os.makedirs(final_output_dir, exist_ok=True)
+        safe_series_name = sanitize_filename(anime_series_name)
+        safe_title = sanitize_filename(title)
+        final_output_dir = Path(self.args.output_dir) / safe_series_name
+        final_output_dir.mkdir(parents=True, exist_ok=True)
 
         ydl_opts = {
             "concurrent_fragment_downloads": 32,
             "http_headers": yt_dlp_cookie_dict,
             "verbose": logger.isEnabledFor(logging.DEBUG),
-            "outtmpl": title + ".%(ext)s",
-            "paths": {"home": final_output_dir},
+            "outtmpl": safe_title + ".%(ext)s",
+            "paths": {"home": str(final_output_dir)},
         }
 
         logger.debug("yt-dlp options: %s", ydl_opts)
@@ -192,7 +230,11 @@ class Anime1Downloader:
 
                 # Record to history
                 if self.history_path:
-                    output_path = os.path.join(self.args.output_dir, anime_series_name, title)
+                    output_path = str(
+                        Path(self.args.output_dir)
+                        / sanitize_filename(anime_series_name)
+                        / sanitize_filename(title)
+                    )
                     entry = create_history_entry(
                         title=title,
                         anime_series=anime_series_name,
@@ -206,8 +248,10 @@ class Anime1Downloader:
                 logger.info("[%-20s] Information extracted", title)
                 logger.info(" - Source URL: https:%s", src)
                 logger.info(" - Cookie: %s", cookie)
-                expected_full_path = os.path.join(
-                    self.args.output_dir, anime_series_name, title + "."
+                expected_full_path = str(
+                    Path(self.args.output_dir)
+                    / sanitize_filename(anime_series_name)
+                    / (sanitize_filename(title) + ".")
                 )
                 logger.info(" - Expected output path: %s", expected_full_path)
         except Exception:
@@ -238,7 +282,8 @@ class Anime1Downloader:
 
         logger.info("Detected anime series name: '%s'", anime_series_name)
         logger.info(
-            "Using output directory: '%s'", os.path.join(self.args.output_dir, anime_series_name)
+            "Using output directory: '%s'",
+            Path(self.args.output_dir) / sanitize_filename(anime_series_name),
         )
         logger.info("Max concurrent downloads: %d", self.args.max_concurrent_downloads)
         if self.history_path:
@@ -263,7 +308,7 @@ class Anime1Downloader:
 def create_parser():
     """Creates and configures the argument parser."""
     parser = argparse.ArgumentParser(
-        "anime1_downloader",
+        prog="uv run python -m anime1_downloader",
         formatter_class=argparse.RawTextHelpFormatter,
         description="Downloads videos from anime1.me using a static parser with requests and beautifulsoup.",
     )

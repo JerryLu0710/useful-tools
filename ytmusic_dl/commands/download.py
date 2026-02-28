@@ -132,7 +132,8 @@ def download_command(args):
     }
 
     # Build output template
-    output_template = str(output_path / "%(artist,channel,uploader)s - %(title)s.%(ext)s")
+    # output_template = str(output_path / "%(artist,channel,uploader)s - %(title)s.%(ext)s")
+    output_template = str(output_path / "%(title)s.%(ext)s")
 
     # Build postprocessors list
     postprocessors = []

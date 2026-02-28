@@ -34,7 +34,7 @@ Add these settings to your `.env` file (all optional):
 Run from the project root:
 
 ```bash
-python -m novel_scraper <subcommand> [options]
+uv run python -m novel_scraper <subcommand> [options]
 ```
 
 ## Architecture

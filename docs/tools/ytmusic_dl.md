@@ -40,7 +40,7 @@ YTMUSIC_DL_HISTORY_FILE=/path/to/history.jsonl
 The tool provides four subcommands:
 
 ```bash
-python -m ytmusic_dl <command> [options]
+uv run python -m ytmusic_dl <command> [options]
 ```
 
 ---
@@ -52,7 +52,7 @@ Download audio from YouTube URLs.
 ### Usage
 
 ```bash
-python -m ytmusic_dl download <urls...> [options]
+uv run python -m ytmusic_dl download <urls...> [options]
 ```
 
 ### Arguments
@@ -68,29 +68,29 @@ python -m ytmusic_dl download <urls...> [options]
 
 **Download a single video:**
 ```bash
-python -m ytmusic_dl download "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+uv run python -m ytmusic_dl download "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 ```
 
 **Download a playlist:**
 ```bash
-python -m ytmusic_dl download "https://music.youtube.com/playlist?list=PLxxxxxxx"
+uv run python -m ytmusic_dl download "https://music.youtube.com/playlist?list=PLxxxxxxx"
 ```
 
 **Download multiple URLs:**
 ```bash
-python -m ytmusic_dl download \
+uv run python -m ytmusic_dl download \
   "https://www.youtube.com/watch?v=video1" \
   "https://www.youtube.com/watch?v=video2"
 ```
 
 **Download and convert to MP3:**
 ```bash
-python -m ytmusic_dl download "URL" --format mp3
+uv run python -m ytmusic_dl download "URL" --format mp3
 ```
 
 **Dry run to preview:**
 ```bash
-python -m ytmusic_dl download "URL" --dry-run
+uv run python -m ytmusic_dl download "URL" --dry-run
 ```
 
 ---
@@ -102,7 +102,7 @@ Verify that your local backup matches the download history. Finds missing songs 
 ### Usage
 
 ```bash
-python -m ytmusic_dl verify [options]
+uv run python -m ytmusic_dl verify [options]
 ```
 
 ### Arguments
@@ -116,17 +116,17 @@ python -m ytmusic_dl verify [options]
 
 **Check for missing songs:**
 ```bash
-python -m ytmusic_dl verify
+uv run python -m ytmusic_dl verify
 ```
 
 **Check and auto-download missing:**
 ```bash
-python -m ytmusic_dl verify --download-missing
+uv run python -m ytmusic_dl verify --download-missing
 ```
 
 **Verify a different directory:**
 ```bash
-python -m ytmusic_dl verify -b "/path/to/backup"
+uv run python -m ytmusic_dl verify -b "/path/to/backup"
 ```
 
 ---
@@ -138,7 +138,7 @@ Extract YouTube video IDs from filenames in a directory.
 ### Usage
 
 ```bash
-python -m ytmusic_dl extract-id <directory>
+uv run python -m ytmusic_dl extract-id <directory>
 ```
 
 ### Arguments
@@ -150,7 +150,7 @@ python -m ytmusic_dl extract-id <directory>
 ### Example
 
 ```bash
-python -m ytmusic_dl extract-id "/path/to/music"
+uv run python -m ytmusic_dl extract-id "/path/to/music"
 ```
 
 **Output:** Lists all YouTube IDs found in filenames (e.g., `dQw4w9WgXcQ`)
@@ -169,7 +169,7 @@ Redownload songs from a text file containing YouTube URLs or IDs.
 ### Usage
 
 ```bash
-python -m ytmusic_dl migrate <file>
+uv run python -m ytmusic_dl migrate <file>
 ```
 
 ### Arguments
@@ -189,7 +189,7 @@ oHg5SJYRHA0
 
 Then migrate:
 ```bash
-python -m ytmusic_dl migrate songs.txt
+uv run python -m ytmusic_dl migrate songs.txt
 ```
 
 **Use cases:**
@@ -231,7 +231,7 @@ This enables:
 **Solution**: 
 ```bash
 # Update yt-dlp to latest version
-pip install --upgrade yt-dlp
+uv sync --group ytmusic_dl --upgrade-package yt-dlp
 ```
 
 > [!TIP]
@@ -263,8 +263,8 @@ pip install --upgrade yt-dlp
 **Solution**:
 ```bash
 # Explicitly request format
-python -m ytmusic_dl download "URL" --format m4a  # Higher quality
-python -m ytmusic_dl download "URL" --format opus # Good quality, smaller size
+uv run python -m ytmusic_dl download "URL" --format m4a  # Higher quality
+uv run python -m ytmusic_dl download "URL" --format opus # Good quality, smaller size
 ```
 
 ### Issue: History file corrupted

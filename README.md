@@ -112,7 +112,7 @@ useful_tools/
 1. Create a new directory: `my_tool/`
 2. Add dependencies to `pyproject.toml`:
    ```toml
-   [project.optional-dependencies]
+   [dependency-groups]
    my_tool = ["dependency1", "dependency2"]
    ```
 3. Create documentation: `docs/tools/my_tool.md`

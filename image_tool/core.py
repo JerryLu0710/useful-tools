@@ -1,7 +1,7 @@
 """Core logic for image tools."""
 
-import os
 import sys
+from pathlib import Path
 
 import cv2
 
@@ -53,7 +53,7 @@ def mark_coordinates(image_path, resize_ratio=None):
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord("s"):
-            base_name = os.path.splitext(os.path.basename(image_path))[0]
+            base_name = Path(image_path).stem
             save_path = f"{base_name}_marked.jpg"
             cv2.imwrite(save_path, display_image)
             logger.info(f"Image saved as {save_path}")
@@ -86,7 +86,7 @@ def extract_frame(video_path, desired_time, output_dir):
     if not ret:
         raise OSError(f"Error: Could not read frame at {desired_time} seconds.")
 
-    output_image_path = os.path.join(output_dir, f"frame_at_{desired_time}s.jpg")
+    output_image_path = str(Path(output_dir) / f"frame_at_{desired_time}s.jpg")
     cv2.imwrite(output_image_path, frame)
 
     video.release()
@@ -103,8 +103,8 @@ def capture_and_save_images(camera_index, save_dir):
     if not cap.isOpened():
         raise OSError(f"Error: Could not open camera {camera_index}.")
 
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    save_path = Path(save_dir)
+    save_path.mkdir(parents=True, exist_ok=True)
 
     img_counter = 1
 
@@ -121,7 +121,7 @@ def capture_and_save_images(camera_index, save_dir):
         key = cv2.waitKey(1) & 0xFF
 
         if key == ord("s"):
-            img_name = os.path.join(save_dir, f"{img_counter:02d}.jpg")
+            img_name = str(Path(save_dir) / f"{img_counter:02d}.jpg")
             cv2.imwrite(img_name, frame)
             logger.info(f"{img_name} saved!")
             img_counter += 1
