@@ -1,4 +1,5 @@
 import json
+import shutil
 import logging
 import sys
 from datetime import datetime, timedelta
@@ -11,6 +12,28 @@ from ytmusic_dl.common.logger import logger
 from ytmusic_dl.common.utils import extract_artist
 
 HONG_KONG_TZ = ZoneInfo("Asia/Hong_Kong")
+
+
+def _build_js_opts() -> dict:
+    """Build yt-dlp options for Node.js runtime discovery.
+
+    When yt-dlp is used as a Python library, it does not read its CLI
+    config.txt, so js_runtimes and remote_components must be injected
+    directly into the options dict.
+
+    Returns:
+        Dictionary of JS-related yt-dlp options, or empty dict if
+        Node.js is not found.
+    """
+    node_path = shutil.which("node")
+    if node_path:
+        logger.debug(f"Using Node.js at: {node_path}")
+        return {
+            "js_runtimes": {"node": {"path": node_path}},
+            "remote_components": ["ejs:github"],
+        }
+    logger.warning("Node.js not found in PATH — some formats may be missing")
+    return {}
 
 
 def load_history(history_path: Path) -> set[str]:
@@ -69,10 +92,12 @@ def get_video_info(url: str) -> tuple[list[dict], bool]:
         Tuple of (list of video info dictionaries, is_playlist flag).
         Returns ([], False) on failure.
     """
+    js_opts = _build_js_opts()
     ydl_opts = {
         "quiet": True,
         "no_warnings": True,
         "extract_flat": "in_playlist",
+        **js_opts,
     }
 
     try:
@@ -173,6 +198,9 @@ def download_command(args):
             ]
         )
 
+    # Find Node.js for JS-based extractors
+    js_opts = _build_js_opts()
+
     # yt-dlp options for downloading
     ydl_opts = {
         "format": download_options["quality"],
@@ -187,10 +215,11 @@ def download_command(args):
         "retries": 10,
         "ignoreerrors": "only_download",
         "extractor_args": {"youtube": {"lang": ["ja"]}},
+        **js_opts,
     }
 
     # yt-dlp options for fetching metadata
-    meta_ydl_opts = {"quiet": True, "no_warnings": True}
+    meta_ydl_opts = {"quiet": True, "no_warnings": True, **js_opts}
 
     if args.browser:
         ydl_opts["cookiesfrombrowser"] = (args.browser,)
@@ -250,9 +279,20 @@ def download_command(args):
 
             try:
                 info = ydl.extract_info(video_id, download=True)
-                file_path = info.get("requested_downloads")[0].get(
-                    "filepath", f"{artist} - {title}.{args.audio_format}"
-                )
+                logger.info(f"Info: {json.dumps(info, indent=2)}")
+
+                # With ignoreerrors="only_download", yt-dlp returns None
+                # or omits requested_downloads when the download fails
+                if info is None:
+                    raise RuntimeError("Download failed (no info returned)")
+
+                requested_downloads = info.get("requested_downloads")
+                if not requested_downloads:
+                    raise RuntimeError("Download failed (no output file produced)")
+
+                file_path = requested_downloads[0].get("filepath")
+                if not file_path or not Path(file_path).exists():
+                    raise RuntimeError(f"Download failed (output file '{file_path}' not found)")
 
                 # Create history entry
                 entry = {

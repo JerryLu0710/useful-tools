@@ -231,7 +231,8 @@ This enables:
 **Solution**: 
 ```bash
 # Update yt-dlp to latest version
-uv sync --group ytmusic_dl --upgrade-package yt-dlp
+uv lock --upgrade-package yt-dlp
+uv sync --all-groups
 ```
 
 > [!TIP]
