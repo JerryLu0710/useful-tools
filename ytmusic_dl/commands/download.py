@@ -278,7 +278,9 @@ def download_command(args):
             logger.info(f"[{idx}/{len(videos)}] Downloading: {artist} - {title}")
 
             try:
-                info = ydl.extract_info(video_id, download=True)
+                info = ydl.extract_info(
+                    f"https://music.youtube.com/watch?v={video_id}", download=True
+                )
                 # logger.info(f"Info: {json.dumps(info, indent=2)}")
 
                 # With ignoreerrors="only_download", yt-dlp returns None
