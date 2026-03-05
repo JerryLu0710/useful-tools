@@ -6,7 +6,13 @@ from ytmusic_dl.common.logger import logger
 
 
 def _read_ids_from_txt(path) -> list[str]:
-    """Read video IDs from a plain-text file (``youtube <id>`` per line).
+    """Read video IDs from a plain-text file.
+
+    Supported line formats:
+    - ``youtube <id>`` (yt-dlp format)
+    - ``<id>`` (bare video ID, single token per line)
+
+    Blank lines and unrecognised formats are skipped.
 
     Args:
         path: Path to the text file.
@@ -21,10 +27,14 @@ def _read_ids_from_txt(path) -> list[str]:
             if not line:
                 continue
             parts = line.split()
-            if len(parts) != 2 or parts[0] != "youtube":
+            if len(parts) == 1:
+                # Bare video ID
+                video_ids.append(parts[0])
+            elif len(parts) == 2 and parts[0] == "youtube":
+                # "youtube <id>" format
+                video_ids.append(parts[1])
+            else:
                 logger.warning(f"Skipping invalid line: {line}")
-                continue
-            video_ids.append(parts[1])
     return video_ids
 
 
@@ -62,7 +72,7 @@ def migrate_command(args):
 
     File format is auto-detected by extension:
     - ``.jsonl`` → each line is a JSON object with an ``"id"`` key.
-    - anything else → plain text with ``youtube <id>`` per line.
+    - anything else → plain text, one video ID per line (or ``youtube <id>``).
     """
     file_path = args.file_path
 
