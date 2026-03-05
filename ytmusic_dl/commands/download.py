@@ -81,23 +81,29 @@ def append_to_history(history_path: Path, entry: dict):
         logger.error(f"Failed to write to history file: {e}")
 
 
-def get_video_info(url: str) -> tuple[list[dict], bool]:
+def get_video_info(url: str, cookie_opts: dict | None = None) -> tuple[list[dict], bool]:
     """
     Extract video information without downloading.
 
     Args:
         url: YouTube URL
+        cookie_opts: Optional dictionary of cookie-related yt-dlp options
+            (e.g. cookiefile or cookiesfrombrowser).
 
     Returns:
         Tuple of (list of video info dictionaries, is_playlist flag).
         Returns ([], False) on failure.
     """
+    if cookie_opts is None:
+        cookie_opts = {}
+
     js_opts = _build_js_opts()
     ydl_opts = {
         "quiet": True,
         "no_warnings": True,
         "extract_flat": "in_playlist",
         **js_opts,
+        **cookie_opts,
     }
 
     try:
@@ -130,12 +136,19 @@ def download_command(args):
     if downloaded_ids:
         logger.info(f"Found {len(downloaded_ids)} previously downloaded tracks")
 
+    # Build cookie options early so they are available for info extraction
+    cookie_opts: dict = {}
+    if args.browser:
+        cookie_opts["cookiesfrombrowser"] = (args.browser,)
+    elif args.cookies:
+        cookie_opts["cookiefile"] = str(args.cookies)
+
     # Get video information from all URLs
     all_videos = []
     is_playlist = False
     for url in args.urls:
         logger.info(f"Extracting video information from: {url}")
-        videos_from_url, url_is_playlist = get_video_info(url)
+        videos_from_url, url_is_playlist = get_video_info(url, cookie_opts)
         all_videos.extend(videos_from_url)
         if url_is_playlist:
             is_playlist = True
@@ -216,17 +229,11 @@ def download_command(args):
         "ignoreerrors": "only_download",
         "extractor_args": {"youtube": {"lang": ["ja"]}},
         **js_opts,
+        **cookie_opts,
     }
 
     # yt-dlp options for fetching metadata
-    meta_ydl_opts = {"quiet": True, "no_warnings": True, **js_opts}
-
-    if args.browser:
-        ydl_opts["cookiesfrombrowser"] = (args.browser,)
-        meta_ydl_opts["cookiesfrombrowser"] = (args.browser,)
-    elif args.cookies:
-        ydl_opts["cookiefile"] = str(args.cookies)
-        meta_ydl_opts["cookiefile"] = str(args.cookies)
+    meta_ydl_opts = {"quiet": True, "no_warnings": True, **js_opts, **cookie_opts}
 
     # Statistics
     downloaded_count = 0
