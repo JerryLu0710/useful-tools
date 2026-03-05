@@ -131,11 +131,66 @@ def main():
     metadata_parser.add_argument("file_path", type=Path, help="Path to the audio file.")
     metadata_parser.set_defaults(func=metadata_command)
 
-    # --- Migrate Command (Redownload from TXT) ---
-    migrate_parser = subparsers.add_parser("migrate", help="Redownload songs from a text file list")
-    migrate_parser.add_argument(
-        "file_path", type=Path, help="Path to the text file containing 'youtube <id>' lines."
+    # --- Migrate Command (Redownload from TXT/JSONL) ---
+    migrate_parser = subparsers.add_parser(
+        "migrate", help="Redownload songs from a text or JSONL history file"
     )
+    migrate_parser.add_argument(
+        "file_path",
+        type=Path,
+        help="Path to a file with video IDs. Supports JSONL (history) or plain text ('youtube <id>' per line).",
+    )
+    migrate_parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=YTMusicDLConfig.DEFAULT_DOWNLOAD_DIR,
+        help=f"Output directory (default: {YTMusicDLConfig.DEFAULT_DOWNLOAD_DIR})",
+    )
+    migrate_parser.add_argument(
+        "-f",
+        "--format",
+        default="best",
+        dest="audio_format",
+        help="Audio format to convert to (default: best)",
+    )
+    migrate_parser.add_argument(
+        "-q",
+        "--quality",
+        default="141/bestaudio[ext=m4a]/bestaudio",
+        help="Quality selection (default: 141/bestaudio[ext=m4a]/bestaudio)",
+    )
+    migrate_parser.add_argument(
+        "-hi",
+        "--history",
+        type=Path,
+        default=YTMusicDLConfig.DEFAULT_HISTORY_FILE,
+        help=f"Path to JSONL history file (default: {YTMusicDLConfig.DEFAULT_HISTORY_FILE})",
+    )
+    migrate_parser.add_argument(
+        "-dr",
+        "--dry-run",
+        action="store_true",
+        help="Show what would be downloaded without downloading",
+    )
+    migrate_parser.add_argument(
+        "--no-thumbnail", action="store_true", help="Skip embedding thumbnail"
+    )
+    migrate_parser.add_argument("--no-metadata", action="store_true", help="Skip adding metadata")
+    migrate_cookie_group = migrate_parser.add_mutually_exclusive_group()
+    migrate_cookie_group.add_argument(
+        "--browser",
+        default=None,
+        choices=["chrome", "firefox", "brave", "edge"],
+        help="Browser to extract cookies from for authentication",
+    )
+    migrate_cookie_group.add_argument(
+        "--cookies",
+        type=Path,
+        default=None,
+        help="Path to a Netscape-format cookies.txt file for authentication",
+    )
+    migrate_parser.add_argument("--force", action="store_true", help="Download even if in history")
     migrate_parser.set_defaults(func=migrate_command)
 
     args = parser.parse_args()
