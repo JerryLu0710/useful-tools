@@ -18,24 +18,29 @@ ID_METADATA_KEYS = [
 ]
 
 
-def load_history_ids(history_path: Path) -> set[str]:
-    """Loads all video IDs from the JSONL history file into a set."""
-    downloaded_ids = set()
+def load_history_ids(history_path: Path) -> dict[str, str]:
+    """Loads all video IDs from the JSONL history file into a dict.
+
+    Returns:
+        A dictionary mapping video ID to its title.
+    """
+    downloaded: dict[str, str] = {}
     if not history_path.exists():
         logger.warning(f"History file not found at '{history_path}'")
-        return downloaded_ids
+        return downloaded
 
     with open(history_path, encoding="utf-8") as f:
         for i, line in enumerate(f, 1):
             if line.strip():
                 try:
                     entry = json.loads(line)
-                    if "id" in entry:
-                        downloaded_ids.add(entry["id"])
+                    vid = entry.get("id")
+                    if vid:
+                        downloaded[vid] = entry.get("title", "Unknown")
                 except json.JSONDecodeError:
                     logger.warning(f"Could not parse line {i} in history file.")
-    logger.info(f"Loaded {len(downloaded_ids)} unique IDs from history file.")
-    return downloaded_ids
+    logger.info(f"Loaded {len(downloaded)} unique IDs from history file.")
+    return downloaded
 
 
 def extract_id_from_file(file_path: Path, scan_all: bool) -> str | None:
@@ -131,7 +136,8 @@ def download_missing_songs(missing_ids: list[str]):
 def verify_command(args):
     """Main logic for the verify command."""
     logger.info("Starting verification process...")
-    history_ids = load_history_ids(args.history)
+    history_map = load_history_ids(args.history)
+    history_ids = set(history_map.keys())
 
     if not args.backup_dir.exists():
         logger.error(f"Backup directory not found at '{args.backup_dir}'")
@@ -153,12 +159,14 @@ def verify_command(args):
 
     missing_files = {}
     files_without_id = []
+    found_ids: set[str] = set()
 
     for i, file in enumerate(audio_files, 1):
         print(f"\rProcessing file {i}/{len(audio_files)}: {file.name.ljust(80)}", end="")
         embedded_id = extract_id_from_file(file, args.scan_all)
 
         if embedded_id:
+            found_ids.add(embedded_id)
             if embedded_id not in history_ids:
                 missing_files[embedded_id] = file.name
         else:
@@ -176,6 +184,17 @@ def verify_command(args):
             logger.info(f"  - ID: {video_id:<12} File: {filename}")
     else:
         logger.info("All audio files with a valid YouTube ID are present in the history file.")
+
+    # Reverse check: history IDs not found in any audio file
+    orphan_ids = history_ids - found_ids
+    if orphan_ids:
+        logger.info(
+            f"Found {len(orphan_ids)} IDs in the history file with no matching audio file on disk:"
+        )
+        for video_id in orphan_ids:
+            logger.info(f"  - ID: {video_id:<12} Title: {history_map.get(video_id, 'Unknown')}")
+    else:
+        logger.info("All history IDs have a matching audio file on disk.")
 
     if files_without_id:
         logger.warning(

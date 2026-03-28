@@ -284,6 +284,20 @@ def download_command(args):
             # Normal download
             logger.info(f"[{idx}/{len(videos)}] Downloading: {artist} - {title}")
 
+            # If a file with the same title already exists, include the
+            # artist name in the filename to avoid overwriting.
+            existing = list(output_path.glob(f"{title}.*"))
+            if existing:
+                logger.info(
+                    f"File with title '{title}' already exists, "
+                    f"appending artist name to filename."
+                )
+                ydl.params["outtmpl"]["default"] = str(
+                    output_path / f"%(title)s - {artist}.%(ext)s"
+                )
+            else:
+                ydl.params["outtmpl"]["default"] = output_template
+
             try:
                 info = ydl.extract_info(
                     f"https://music.youtube.com/watch?v={video_id}", download=True
