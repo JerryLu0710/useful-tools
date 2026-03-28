@@ -289,8 +289,7 @@ def download_command(args):
             existing = list(output_path.glob(f"{title}.*"))
             if existing:
                 logger.info(
-                    f"File with title '{title}' already exists, "
-                    f"appending artist name to filename."
+                    f"File with title '{title}' already exists, appending artist name to filename."
                 )
                 ydl.params["outtmpl"]["default"] = str(
                     output_path / f"%(title)s - {artist}.%(ext)s"
