@@ -24,7 +24,7 @@
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Frontend   │─── ▶│   Backend   │────▶│  Database   │
+│  Frontend   │---->│   Backend   │---->│  Database   │
 │             │     │             │     │             │
 │ - Component │     │ - Service   │     │ - Table     │
 │ - Form      │     │ - API       │     │             │
