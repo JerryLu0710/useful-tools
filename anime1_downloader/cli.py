@@ -4,11 +4,22 @@ import concurrent.futures
 import json
 import logging
 import re
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
+from rich.console import Console
+from rich.logging import RichHandler
+from rich.progress import (
+    BarColumn,
+    DownloadColumn,
+    Progress,
+    TextColumn,
+    TransferSpeedColumn,
+)
 
+from config import Config
 from logger_setup import get_logger
 
 from .config import AnimeDownloaderConfig
@@ -52,6 +63,26 @@ def sanitize_filename(name: str) -> str:
     # Collapse multiple spaces into one
     sanitized = re.sub(r"\s+", " ", sanitized)
     return sanitized
+
+
+def _bind_console_to_logger(console):
+    """Swap this module's StreamHandler for a RichHandler bound to the shared console.
+    The RotatingFileHandler is left untouched, and no other logger is affected.
+    """
+    for h in list(logger.handlers):
+        if isinstance(h, logging.StreamHandler) and not isinstance(h, RotatingFileHandler):
+            logger.removeHandler(h)
+    rich_handler = RichHandler(
+        console=console,
+        show_time=False,
+        show_level=False,
+        show_path=False,
+        markup=False,
+    )
+    rich_handler.setFormatter(
+        logging.Formatter(Config.LOG_FORMAT_CONSOLE, datefmt=Config.LOG_DATE_FORMAT)
+    )
+    logger.addHandler(rich_handler)
 
 
 class Anime1Downloader:
@@ -172,8 +203,23 @@ class Anime1Downloader:
 
         return src, session.cookies.get_dict()
 
-    def _download_video(self, src, cookie, title, anime_series_name):
-        """Downloads a video using the yt-dlp library."""
+    def _make_progress_hook(self, task_id, progress):
+        """Create a yt-dlp progress hook that updates a shared rich Progress bar."""
+
+        def _hook(d):
+            if d["status"] == "downloading":
+                total = d.get("total_bytes") or d.get("total_bytes_estimate")
+                downloaded = d.get("downloaded_bytes", 0)
+                if total:
+                    progress.update(task_id, completed=downloaded, total=total)
+            elif d["status"] == "finished":
+                if progress.tasks[task_id].total:
+                    progress.update(task_id, completed=progress.tasks[task_id].total)
+
+        return _hook
+
+    def _download_video(self, src, cookie, title, anime_series_name, task_id, progress):
+        """Downloads a video using the yt-dlp library, rendering progress via shared rich Progress."""
         import yt_dlp
 
         src = "https:" + src
@@ -201,6 +247,9 @@ class Anime1Downloader:
             "verbose": logger.isEnabledFor(logging.DEBUG),
             "outtmpl": safe_title + ".%(ext)s",
             "paths": {"home": str(final_output_dir)},
+            "quiet": True,
+            "noprogress": True,
+            "progress_hooks": [self._make_progress_hook(task_id, progress)],
         }
 
         logger.debug("yt-dlp options: %s", ydl_opts)
@@ -209,7 +258,7 @@ class Anime1Downloader:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([src])
 
-    def _process_single_episode(self, video_tuple, anime_series_name):
+    def _process_single_episode(self, video_tuple, anime_series_name, task_id, progress):
         """
         Processes a single video entry (gets source and potentially downloads),
         runs in a thread pool.
@@ -218,15 +267,15 @@ class Anime1Downloader:
 
         # Check if already downloaded (skip unless --force)
         if self.history_path and not self.args.force and title in self.downloaded_titles:
-            logger.info("[%-20s] Already downloaded, skipping", title)
+            progress.update(task_id, description=f"[dim]{title} (skipped)[/dim]")
             return
 
         try:
-            logger.info("[%-20s] Start processing", title)
+            progress.update(task_id, description=f"[bold]{title}[/bold]")
             src, cookie = self._get_source(data_apireq)
             if not self.args.extract:
-                self._download_video(src, cookie, title, anime_series_name)
-                logger.info("[%-20s] Download complete", title)
+                self._download_video(src, cookie, title, anime_series_name, task_id, progress)
+                progress.update(task_id, description=f"[green]{title} ✓[/green]")
 
                 # Record to history
                 if self.history_path:
@@ -245,7 +294,7 @@ class Anime1Downloader:
                     self.downloaded_titles.add(title)
                     logger.debug("[%-20s] Added to history", title)
             else:
-                logger.info("[%-20s] Information extracted", title)
+                progress.update(task_id, description=f"[cyan]{title} (extracted)[/cyan]")
                 logger.info(" - Source URL: https:%s", src)
                 logger.info(" - Cookie: %s", cookie)
                 expected_full_path = str(
@@ -255,10 +304,14 @@ class Anime1Downloader:
                 )
                 logger.info(" - Expected output path: %s", expected_full_path)
         except Exception:
+            progress.update(task_id, description=f"[red]{title} ✗[/red]")
             logger.exception("Failed to process '%s'", title)
 
     def run(self):
         """Main execution method for the downloader."""
+        console = Console()
+        _bind_console_to_logger(console)
+
         logger.info("Extracting information from %s", self.args.url)
 
         # Load history if enabled
@@ -290,13 +343,27 @@ class Anime1Downloader:
             logger.info("History file: %s", self.history_path)
         logger.info("_")
 
-        with concurrent.futures.ThreadPoolExecutor(
-            max_workers=self.args.max_concurrent_downloads, thread_name_prefix="dl"
-        ) as executor:
-            futures = [
-                executor.submit(self._process_single_episode, video, anime_series_name)
-                for video in videos
-            ]
+        with (
+            Progress(
+                TextColumn("[bold blue]{task.fields[title]}"),
+                BarColumn(),
+                DownloadColumn(),
+                TransferSpeedColumn(),
+                console=console,
+            ) as progress,
+            concurrent.futures.ThreadPoolExecutor(
+                max_workers=self.args.max_concurrent_downloads, thread_name_prefix="dl"
+            ) as executor,
+        ):
+            futures = []
+            for video in videos:
+                title = video[0]
+                task_id = progress.add_task("download", title=title, total=None)
+                futures.append(
+                    executor.submit(
+                        self._process_single_episode, video, anime_series_name, task_id, progress
+                    )
+                )
 
             for future in concurrent.futures.as_completed(futures):
                 try:

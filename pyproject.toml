@@ -45,6 +45,7 @@ anime1_downloader = [
     "beautifulsoup4",
     "lxml",
     "yt-dlp",
+    "rich",
 ]
 
 # Dependencies for the image_tool
