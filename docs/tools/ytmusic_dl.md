@@ -63,6 +63,7 @@ uv run python -m ytmusic_dl download <urls...> [options]
 | `-o`, `--output` | ❌ | Output directory (overrides config) |
 | `-f`, `--format` | ❌ | Audio format: `mp3`, `m4a`, `opus`, etc. Default: `best` (keeps original) |
 | `-dr`, `--dry-run` | ❌ | Show what would be downloaded without actually downloading |
+| `--[no-]prompt-on-duplicate` | ❌ | Ask before downloading a same-title track as a separate artist-suffixed file. Prompting is enabled by default. |
 
 ### Examples
 
@@ -91,6 +92,11 @@ uv run python -m ytmusic_dl download "URL" --format mp3
 **Dry run to preview:**
 ```bash
 uv run python -m ytmusic_dl download "URL" --dry-run
+```
+
+**Download without duplicate prompts for batch use:**
+```bash
+uv run python -m ytmusic_dl download "URL" --no-prompt-on-duplicate
 ```
 
 ---

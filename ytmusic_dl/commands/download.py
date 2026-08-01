@@ -3,6 +3,7 @@ import logging
 import shutil
 import sys
 from datetime import datetime, timedelta
+from glob import escape
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -12,6 +13,22 @@ from ytmusic_dl.common.logger import logger
 from ytmusic_dl.common.utils import extract_artist
 
 HONG_KONG_TZ = ZoneInfo("Asia/Hong_Kong")
+
+AUDIO_FILE_EXTENSIONS = frozenset(
+    {
+        ".aac",
+        ".flac",
+        ".m4a",
+        ".m4b",
+        ".mka",
+        ".mp3",
+        ".mp4",
+        ".ogg",
+        ".opus",
+        ".wav",
+        ".webm",
+    }
+)
 
 
 def _build_js_opts() -> dict:
@@ -121,6 +138,49 @@ def get_video_info(url: str, cookie_opts: dict | None = None) -> tuple[list[dict
         return [], False
 
 
+def find_existing_audio_files(output_path: Path, filename_stem: str) -> list[Path]:
+    """Return audio files whose filename stem exactly matches ``filename_stem``."""
+    pattern = f"{escape(filename_stem)}.*"
+    return [
+        path
+        for path in output_path.glob(pattern)
+        if path.is_file() and path.suffix.lower() in AUDIO_FILE_EXTENSIONS
+    ]
+
+
+def confirm_duplicate_download(title: str, existing_files: list[Path]) -> bool:
+    """Ask whether to download a same-title track as a separate file."""
+    existing_names = ", ".join(path.name for path in existing_files)
+    prompt = (
+        f"Existing audio file(s) for '{title}' found: {existing_names}. "
+        "Download a separate artist-suffixed file? [y/N]: "
+    )
+
+    try:
+        response = input(prompt).strip().casefold()
+    except (EOFError, OSError):
+        logger.warning("No duplicate-download response available. Skipping track.")
+        return False
+
+    return response in {"y", "yes"}
+
+
+def build_duplicate_output_template(
+    output_path: Path, title: str, artist: str, video_id: str
+) -> str:
+    """Build a collision-safe output template for a confirmed duplicate title."""
+    artist_stem = f"{title} - {artist}"
+    artist_files = find_existing_audio_files(output_path, artist_stem)
+    if artist_files:
+        logger.info(
+            "Artist-suffixed filename already exists; appending the video ID to keep the "
+            "download separate."
+        )
+        return str(output_path / f"%(title)s - {artist} [{video_id}].%(ext)s")
+
+    return str(output_path / f"%(title)s - {artist}.%(ext)s")
+
+
 def download_command(args):
     """Main logic for the download command."""
     # Convert paths
@@ -171,7 +231,7 @@ def download_command(args):
 
     # Build output template
     # output_template = str(output_path / "%(artist,channel,uploader)s - %(title)s.%(ext)s")
-    output_template = str(output_path / "%(title)s.%(ext)s")
+    default_output_template = str(output_path / "%(title)s.%(ext)s")
 
     # Build postprocessors list
     postprocessors = []
@@ -217,7 +277,7 @@ def download_command(args):
     # yt-dlp options for downloading
     ydl_opts = {
         "format": download_options["quality"],
-        "outtmpl": {"default": output_template},
+        "outtmpl": {"default": default_output_template},
         "postprocessors": postprocessors,
         "writethumbnail": download_options["embed_thumbnail"],
         "convert_thumbnails": "jpg",
@@ -284,18 +344,28 @@ def download_command(args):
             # Normal download
             logger.info(f"[{idx}/{len(videos)}] Downloading: {artist} - {title}")
 
-            # If a file with the same title already exists, include the
-            # artist name in the filename to avoid overwriting.
-            existing = list(output_path.glob(f"{title}.*"))
-            if existing:
+            # If a file with the same title already exists, ask before using
+            # an artist-suffixed filename to avoid overwriting it.
+            existing_files = find_existing_audio_files(output_path, title)
+            if existing_files:
                 logger.info(
-                    f"File with title '{title}' already exists, appending artist name to filename."
+                    f"Found {len(existing_files)} existing audio file(s) with title '{title}'."
                 )
-                ydl.params["outtmpl"]["default"] = str(
-                    output_path / f"%(title)s - {artist}.%(ext)s"
+
+                # This option intentionally belongs only to the download CLI.
+                # Internal callers without the argument retain their current
+                # non-interactive behavior.
+                prompt_on_duplicate = getattr(args, "prompt_on_duplicate", False)
+                if prompt_on_duplicate and not confirm_duplicate_download(title, existing_files):
+                    logger.info(f"Skipping duplicate-title track: {artist} - {title}")
+                    skipped_count += 1
+                    continue
+
+                ydl.params["outtmpl"]["default"] = build_duplicate_output_template(
+                    output_path, title, artist, video_id
                 )
             else:
-                ydl.params["outtmpl"]["default"] = output_template
+                ydl.params["outtmpl"]["default"] = default_output_template
 
             try:
                 info = ydl.extract_info(

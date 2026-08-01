@@ -74,6 +74,12 @@ def main():
         help="Show what would be downloaded without downloading",
     )
     download_parser.add_argument(
+        "--prompt-on-duplicate",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=("Prompt before downloading a same-title track as a separate file (default: enabled)"),
+    )
+    download_parser.add_argument(
         "--no-thumbnail", action="store_true", help="Skip embedding thumbnail"
     )
     download_parser.add_argument("--no-metadata", action="store_true", help="Skip adding metadata")
