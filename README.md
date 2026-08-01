@@ -81,7 +81,7 @@ uv run python -m ytmusic_dl download "https://music.youtube.com/playlist?list=..
 | Document | Description |
 |----------|-------------|
 | [Setup & Configuration](docs/setup.md) | Environment setup, `.env` configuration, logging |
-| [Development Guide](GEMINI.md) | Architecture, coding standards, design principles |
+| [Development Guide](AGENTS.md) | Architecture, coding standards, design principles |
 | [Task Logging Guide](TASK_LOGGING_GUIDE.md) | Development workflow and task tracking |
 
 ---
@@ -133,7 +133,7 @@ uv run ruff check ./ --fix
 - Follow **SRP** (Single Responsibility Principle)
 - Use **type hints** for all functions
 - Add **docstrings** (Google style)
-- See [GEMINI.md](GEMINI.md) for detailed guidelines
+- See [AGENTS.md](AGENTS.md) for detailed guidelines
 
 ---
 
@@ -141,7 +141,7 @@ uv run ruff check ./ --fix
 
 Contributions are welcome! Please:
 
-1. Follow the coding standards in [GEMINI.md](GEMINI.md)
+1. Follow the coding standards in [AGENTS.md](AGENTS.md)
 2. Update documentation for any new features
 3. Run linting before committing
 4. Follow the Open/Closed Principle for extensibility
@@ -158,7 +158,7 @@ This project is licensed under the MIT License.
 
 - **Setup Guide**: [docs/setup.md](docs/setup.md)
 - **Tool Documentation**: [docs/tools/](docs/tools/)
-- **Development Guide**: [GEMINI.md](GEMINI.md)
+- **Development Guide**: [AGENTS.md](AGENTS.md)
 
 ---
 

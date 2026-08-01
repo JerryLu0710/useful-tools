@@ -251,5 +251,5 @@ chmod 755 logs
 ## Next Steps
 
 - 📚 [View available tools](../README.md#available-tools)
-- 🛠️ [Contributing guide](../GEMINI.md)
+- 🛠️ [Contributing guide](../AGENTS.md)
 - 📝 [Development workflow](../TASK_LOGGING_GUIDE.md)

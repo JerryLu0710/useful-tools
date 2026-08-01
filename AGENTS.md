@@ -83,5 +83,5 @@ This section provides a brief guide for contributing to the project.
 1.  **Create a Branch:** Before you start working on a new feature or bug fix, create a new branch from the `main` branch.
 2.  **Write Code:** Write your code, following the standards and principles outlined in this document.
 3.  **Write Tests:** Add unit tests for your new code to ensure it works as expected and to prevent future regressions.
-4.  **Update Documentation:** If you add a new feature or change the behavior of an existing one, update the relevant documentation (`README.md`, `GEMINI.md`, etc.).
+4.  **Update Documentation:** If you add a new feature or change the behavior of an existing one, update the relevant documentation (`README.md`, `AGENTS.md`, etc.).
 5.  **Submit a Pull Request:** Once your work is complete, submit a pull request to the `main` branch. Provide a clear description of your changes and why they are needed.
