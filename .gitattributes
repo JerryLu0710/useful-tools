@@ -1,0 +1,13 @@
+# Keep repository text consistent across Windows, WSL, Linux, and macOS.
+* text=auto eol=lf
+
+# Do not apply text conversion or textual diffs to binary media and archives.
+*.epub -text
+*.gif -text
+*.jpeg -text
+*.jpg -text
+*.mp3 -text
+*.mp4 -text
+*.png -text
+*.webm -text
+*.zip -text
