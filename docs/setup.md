@@ -5,8 +5,7 @@ This guide covers the initial setup, environment configuration, and system-wide 
 ## Prerequisites
 
 - **Python**: Version 3.10 or higher
-- **uv**: Recommended package manager ([installation guide](https://github.com/astral-sh/uv))
-    - Alternatively, you can use `pip` and `venv`
+- **uv**: Package and environment manager ([installation guide](https://github.com/astral-sh/uv))
 
 ## Initial Setup
 
@@ -74,16 +73,6 @@ uv run ruff check ./
 > [!TIP]
 > `uv run` automatically uses the project's virtual environment, no need to activate it manually!
 
-### 4. Configure Environment Variables
-
-Copy the example configuration file:
-
-```bash
-cp .env.example .env
-```
-
-Then edit `.env` to customize your settings (see [Configuration Reference](#configuration-reference) below).
-
 ## Understanding the Modern uv Workflow
 
 ### What is `uv sync`?
@@ -145,7 +134,7 @@ Control logging behavior across all utilities:
 | `LOG_BACKUP_COUNT` | `5` | Number of backup log files to keep |
 
 **How it works:**
-- The [`logger_setup.py`](logger_setup.py) module provides a centralized logging system
+- The [`logger_setup.py`](../logger_setup.py) module provides a centralized logging system
 - Each utility gets its own log file (e.g., `logs/chinese_converter.log`)
 - Log files use rotation to prevent unlimited growth
 - Console output shows simplified messages; files contain detailed debug info
@@ -174,7 +163,6 @@ Each utility has its own configuration section. See the tool-specific documentat
 - [Anime1 Downloader Configuration](tools/anime1_downloader.md#configuration)
 - [Image Tool Configuration](tools/image_tool.md#configuration)
 - [YouTube Music Downloader Configuration](tools/ytmusic_dl.md#configuration)
-- [Novel Scraper Configuration](tools/novel_scraper.md#configuration)
 
 ### Performance Settings
 
@@ -245,11 +233,11 @@ chmod 755 logs
 
 **Solution**:
 1. Check `pyproject.toml` syntax (must be valid TOML)
-2. Update `uv` to latest version: `pip install --upgrade uv`
-3. Delete `.venv` and `uv.lock`, then retry: `rm -rf .venv uv.lock && uv sync`
+2. Update `uv` using its supported self-update mechanism.
+3. Recreate only the local `.venv` if it is invalid, then run `uv sync` again.
 
 ## Next Steps
 
 - 📚 [View available tools](../README.md#available-tools)
-- 🛠️ [Contributing guide](../AGENTS.md)
-- 📝 [Development workflow](../TASK_LOGGING_GUIDE.md)
+- 🛠️ [Repository instructions](../AGENTS.md)
+- 🏗️ [Architecture guide](architecture.md)

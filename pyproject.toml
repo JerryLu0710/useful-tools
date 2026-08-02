@@ -8,7 +8,6 @@ packages = [
     "anime1_downloader",
     "image_tool",
     "ytmusic_dl",
-    "novel_scraper",
     "utils",
 ]
 

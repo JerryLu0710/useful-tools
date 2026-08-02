@@ -219,7 +219,6 @@ __marimo__/
 test/
 temp/
 logs/
-novel_scraper/
 
 # Gemini settings
 .agent/

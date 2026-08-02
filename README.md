@@ -30,7 +30,7 @@ A curated collection of command-line utilities for everyday automation tasks.
 > [!TIP]
 > Install all tools at once: `uv sync --all-groups`
 > 
-> This installs dependencies for all tools (chinese_converter, anime1_downloader, image_tool, ytmusic_dl, novel_scraper) plus dev tools.
+> This installs dependencies for all tools and development checks.
 
 📖 **Detailed setup guide:** [docs/setup.md](docs/setup.md)
 
@@ -44,7 +44,6 @@ A curated collection of command-line utilities for everyday automation tasks.
 | **Anime1 Downloader** | Download anime from anime1.me with Cloudflare bypass | [📘 Guide](docs/tools/anime1_downloader.md) | `uv sync --group anime1_downloader` |
 | **Image Tool** | Mark coordinates, extract video frames, capture from camera | [📘 Guide](docs/tools/image_tool.md) | `uv sync --group image_tool` |
 | **YouTube Music DL** | Download & manage music from YouTube with verification | [📘 Guide](docs/tools/ytmusic_dl.md) | `uv sync --group ytmusic_dl` |
-| **Novel Scraper** | Scrape web novels and convert to EPUB | [📘 Guide](docs/tools/novel_scraper.md) | `uv sync --group novel_scraper` |
 
 ---
 
@@ -80,9 +79,10 @@ uv run python -m ytmusic_dl download "https://music.youtube.com/playlist?list=..
 
 | Document | Description |
 |----------|-------------|
-| [Setup & Configuration](docs/setup.md) | Environment setup, `.env` configuration, logging |
-| [Development Guide](AGENTS.md) | Architecture, coding standards, design principles |
-| [Task Logging Guide](TASK_LOGGING_GUIDE.md) | Development workflow and task tracking |
+| [Setup & Configuration](docs/setup.md) | Installation, `.env`, and troubleshooting |
+| [Architecture](docs/architecture.md) | Package boundaries and shared conventions |
+| [Repository Instructions](AGENTS.md) | Commands and contributor guidance |
+| [Documentation Index](docs/README.md) | All maintained documentation |
 
 ---
 
@@ -90,14 +90,13 @@ uv run python -m ytmusic_dl download "https://music.youtube.com/playlist?list=..
 
 ```
 useful_tools/
-├── docs/                    # Documentation hub
-│   ├── setup.md            # Setup and configuration guide
-│   └── tools/              # Tool-specific documentation
+├── docs/                    # Setup, architecture, and tool guides
+│   ├── tools/              # Tool-specific documentation
+│   └── standards/          # Repository standards
 ├── chinese_converter/       # Chinese text conversion
 ├── anime1_downloader/       # Anime1.me downloader
 ├── image_tool/             # Image/video utilities
 ├── ytmusic_dl/             # YouTube music downloader
-├── novel_scraper/          # Web novel scraper
 ├── config.py               # Centralized configuration
 ├── logger_setup.py         # Logging setup
 └── pyproject.toml          # Project dependencies
@@ -118,14 +117,16 @@ useful_tools/
 3. Create documentation: `docs/tools/my_tool.md`
 4. Update this README to include your tool
 
-### Running Tests
+### Validation
 
 ```bash
-# Run linting
-uv run ruff check ./
+# Install all tool and development dependencies
+uv sync --all-groups
 
-# Auto-fix issues
-uv run ruff check ./ --fix
+# Run linting, formatting, and tests
+uv run ruff check .
+uv run ruff format --check .
+uv run pytest
 ```
 
 ### Coding Standards
@@ -133,7 +134,7 @@ uv run ruff check ./ --fix
 - Follow **SRP** (Single Responsibility Principle)
 - Use **type hints** for all functions
 - Add **docstrings** (Google style)
-- See [AGENTS.md](AGENTS.md) for detailed guidelines
+- See [AGENTS.md](AGENTS.md) for repository instructions
 
 ---
 
@@ -157,8 +158,9 @@ This project is licensed under the MIT License.
 ## 🔗 Links
 
 - **Setup Guide**: [docs/setup.md](docs/setup.md)
+- **Architecture**: [docs/architecture.md](docs/architecture.md)
 - **Tool Documentation**: [docs/tools/](docs/tools/)
-- **Development Guide**: [AGENTS.md](AGENTS.md)
+- **Repository Instructions**: [AGENTS.md](AGENTS.md)
 
 ---
 

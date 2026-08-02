@@ -45,7 +45,7 @@ project_root/
 │   ├── 20251018_implement_sorting.md
 │   ├── 20251018_fix_api_endpoint.md
 │   └── 20251019_refactor_database.md
-└── TASK_LOGGING_GUIDE.md (this file)
+└── agent-workflow.md (this file)
 ```
 
 ---
@@ -376,10 +376,10 @@ def authenticate_user(token: str) -> bool:
 
 ```
 # When agent receives a task, say:
-> "Follow TASK_LOGGING_GUIDE.md to create an execution log for this task"
+> "Follow docs/agent-workflow.md to create an execution log for this task"
 
 # Or be explicit:
-> "Read TASK_LOGGING_GUIDE.md and create a log file in agent_trace/ following the exact template. The task is: [describe task]"
+> "Read docs/agent-workflow.md and create a log file in agent_trace/ following the exact template. The task is: [describe task]"
 
 # Agent will:
 # 1. Read this guide
