@@ -266,7 +266,7 @@ class Anime1Downloader:
 
         ydl_opts = {
             "concurrent_fragment_downloads": 32,
-            "http_headers": yt_dlp_cookie_dict,
+            "cookiejar": cookie_jar,
             "verbose": logger.isEnabledFor(logging.DEBUG),
             "outtmpl": safe_title + ".%(ext)s",
             "paths": {"home": str(final_output_dir)},
@@ -347,7 +347,7 @@ class Anime1Downloader:
         videos = self._extract_api_path()
         if not videos:
             logger.error("No videos found on the page. Cannot continue.")
-            return
+            return 1
 
         first_video_title = videos[0][0]
         anime_series_name_parts = first_video_title.split(" [")
@@ -444,15 +444,19 @@ def create_parser():
     return parser
 
 
-def main():
+def main(args: list[str] | None = None) -> int:
     """Main entry point for the script."""
     parser = create_parser()
-    args = parser.parse_args()
+    parsed_args = parser.parse_args(args)
     try:
-        downloader = Anime1Downloader(args)
-        downloader.run()
+        downloader = Anime1Downloader(parsed_args)
+        status = downloader.run()
+        if status is not None and status != 0:
+            return status
+        return 0
     except Exception:
         logger.exception("---- UNHANDLED ERROR ----")
+        return 1
     finally:
         logger.info("Complete")
 
