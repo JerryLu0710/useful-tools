@@ -1,6 +1,5 @@
 import json
 import logging
-import shutil
 import sys
 from datetime import datetime, timedelta
 from glob import escape
@@ -41,19 +40,8 @@ def _build_js_opts() -> dict:
     Returns:
         Dictionary of JS-related yt-dlp options.
     """
-    node_path = shutil.which("node")
-    runtimes = {}
-    if node_path:
-        logger.debug(f"Using Node.js at: {node_path}")
-        runtimes["node"] = {"path": node_path}
-    else:
-        logger.debug("Node.js path not resolved via shutil.which, providing default JS runtimes")
-        runtimes["node"] = {}
-        runtimes["deno"] = {}
-        runtimes["bun"] = {}
-
     return {
-        "js_runtimes": runtimes,
+        "js_runtimes": {"node": {}, "deno": {}, "bun": {}},
         "remote_components": ["ejs:github"],
     }
 
