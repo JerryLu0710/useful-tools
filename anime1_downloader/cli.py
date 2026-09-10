@@ -220,21 +220,44 @@ class Anime1Downloader:
 
     def _download_video(self, src, cookie, title, anime_series_name, task_id, progress):
         """Downloads a video using the yt-dlp library, rendering progress via shared rich Progress."""
+        import http.cookiejar
+        from urllib.parse import urlparse
+
         import yt_dlp
 
         src = "https:" + src
 
         dict_cookie = cookie or {}
-        try:
-            e = dict_cookie["e"]
-            h = dict_cookie["h"]
-            p = dict_cookie["p"]
-        except KeyError as ke:
-            logger.error("Missing required cookie field: %s, cookies=%s", ke, dict_cookie)
-            raise
+        for key in ("e", "h", "p"):
+            if key not in dict_cookie:
+                logger.error("Missing required cookie field: %s, cookies=%s", key, dict_cookie)
+                raise KeyError(key)
 
-        all_cookies_str = f"e={e};h={h};p={p}"
-        yt_dlp_cookie_dict = {"cookie": all_cookies_str}
+        parsed_url = urlparse(src)
+        domain = parsed_url.hostname or "v.anime1.me"
+
+        cookie_jar = http.cookiejar.CookieJar()
+        for key in ("e", "h", "p"):
+            c = http.cookiejar.Cookie(
+                version=0,
+                name=key,
+                value=str(dict_cookie[key]),
+                port=None,
+                port_specified=False,
+                domain=domain,
+                domain_specified=True,
+                domain_initial_dot=False,
+                path="/",
+                path_specified=True,
+                secure=False,
+                expires=None,
+                discard=True,
+                comment=None,
+                comment_url=None,
+                rest={},
+                rfc2109=False,
+            )
+            cookie_jar.set_cookie(c)
 
         safe_series_name = sanitize_filename(anime_series_name)
         safe_title = sanitize_filename(title)
