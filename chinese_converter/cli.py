@@ -1,7 +1,6 @@
 """Multi-format Chinese text converter."""
 
 import argparse
-import sys
 import time
 from pathlib import Path
 
@@ -117,7 +116,7 @@ def _generate_default_output(input_path: str, is_batch: bool) -> str:
         return str(parent / f"{stem}_trad{suffix}")
 
 
-def main():
+def main(args: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="uv run python -m chinese_converter",
         description="Convert Chinese text in various file formats",
@@ -134,25 +133,32 @@ def main():
     parser.add_argument("--batch", "-b", action="store_true", help="Batch mode")
     parser.add_argument("--no-backup", action="store_true", help="Skip backup")
 
-    args = parser.parse_args()
+    parsed_args = parser.parse_args(args)
 
     # Generate default output if not provided
-    if not args.output:
-        args.output = _generate_default_output(args.input, args.batch)
-        logger.info(f"Auto-generated output path: {args.output}")
+    if not parsed_args.output:
+        parsed_args.output = _generate_default_output(parsed_args.input, parsed_args.batch)
+        logger.info(f"Auto-generated output path: {parsed_args.output}")
 
-    converter = ChineseTextConverter(args.type)
+    converter = ChineseTextConverter(parsed_args.type)
 
     try:
-        if args.batch:
-            converter.convert_batch(args.input, args.output)
+        if parsed_args.batch:
+            converter.convert_batch(parsed_args.input, parsed_args.output)
+            return 0
         else:
-            success = converter.convert_file(args.input, args.output, not args.no_backup)
+            success = converter.convert_file(
+                parsed_args.input, parsed_args.output, not parsed_args.no_backup
+            )
             if not success:
-                sys.exit(1)
+                return 1
+            return 0
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
-        sys.exit(1)
+        return 1
+    except Exception:
+        logger.exception("---- UNHANDLED ERROR ----")
+        return 1
 
 
 if __name__ == "__main__":
