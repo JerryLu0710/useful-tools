@@ -32,25 +32,30 @@ AUDIO_FILE_EXTENSIONS = frozenset(
 
 
 def _build_js_opts() -> dict:
-    """Build yt-dlp options for Node.js runtime discovery.
+    """Build yt-dlp options for JS runtime discovery and remote components.
 
     When yt-dlp is used as a Python library, it does not read its CLI
     config.txt, so js_runtimes and remote_components must be injected
     directly into the options dict.
 
     Returns:
-        Dictionary of JS-related yt-dlp options, or empty dict if
-        Node.js is not found.
+        Dictionary of JS-related yt-dlp options.
     """
     node_path = shutil.which("node")
+    runtimes = {}
     if node_path:
         logger.debug(f"Using Node.js at: {node_path}")
-        return {
-            "js_runtimes": {"node": {"path": node_path}},
-            "remote_components": ["ejs:github"],
-        }
-    logger.warning("Node.js not found in PATH — some formats may be missing")
-    return {}
+        runtimes["node"] = {"path": node_path}
+    else:
+        logger.debug("Node.js path not resolved via shutil.which, providing default JS runtimes")
+        runtimes["node"] = {}
+        runtimes["deno"] = {}
+        runtimes["bun"] = {}
+
+    return {
+        "js_runtimes": runtimes,
+        "remote_components": ["ejs:github"],
+    }
 
 
 def load_history(history_path: Path) -> set[str]:
