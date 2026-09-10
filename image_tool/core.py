@@ -69,29 +69,30 @@ def extract_frame(video_path, desired_time, output_dir):
     """
     video = cv2.VideoCapture(video_path)
 
-    if not video.isOpened():
-        raise OSError(f"Error: Could not open video {video_path}")
+    try:
+        if not video.isOpened():
+            raise OSError(f"Error: Could not open video {video_path}")
 
-    fps = video.get(cv2.CAP_PROP_FPS)
-    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = video.get(cv2.CAP_PROP_FPS)
+        total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    frame_number = int(fps * desired_time)
+        frame_number = int(fps * desired_time)
 
-    if frame_number >= total_frames:
-        raise ValueError(f"Error: The video is shorter than {desired_time} seconds.")
+        if frame_number >= total_frames:
+            raise ValueError(f"Error: The video is shorter than {desired_time} seconds.")
 
-    video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+        video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
 
-    ret, frame = video.read()
-    if not ret:
-        raise OSError(f"Error: Could not read frame at {desired_time} seconds.")
+        ret, frame = video.read()
+        if not ret:
+            raise OSError(f"Error: Could not read frame at {desired_time} seconds.")
 
-    output_image_path = str(Path(output_dir) / f"frame_at_{desired_time}s.jpg")
-    cv2.imwrite(output_image_path, frame)
+        output_image_path = str(Path(output_dir) / f"frame_at_{desired_time}s.jpg")
+        cv2.imwrite(output_image_path, frame)
 
-    video.release()
-
-    return output_image_path
+        return output_image_path
+    finally:
+        video.release()
 
 
 def capture_and_save_images(camera_index, save_dir):

@@ -80,6 +80,7 @@ quote-style = "double"
 testpaths = [
     "anime1_downloader/tests",
     "chinese_converter/tests",
+    "image_tool/tests",
     "ytmusic_dl/tests",
 ]
 python_files = ["test_*.py"]
@@ -90,6 +91,7 @@ addopts = "-v --tb=short"
 source = [
     "anime1_downloader",
     "chinese_converter",
+    "image_tool",
     "ytmusic_dl",
 ]
 omit = ["*/tests/*", "*/__pycache__/*"]

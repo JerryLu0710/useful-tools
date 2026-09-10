@@ -11,7 +11,7 @@ from .config import ImageToolConfig
 logger = get_logger(__name__, "image_tool")
 
 
-def main():
+def main(args: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="uv run python -m image_tool",
         description="A collection of image tools.",
@@ -59,20 +59,24 @@ def main():
         help="Directory to save captured images (default: 'images')",
     )
 
-    args = parser.parse_args()
+    parsed_args = parser.parse_args(args)
 
-    if args.command == "coords":
-        core.mark_coordinates(args.image_path, args.ratio)
-    elif args.command == "frame":
-        output_dir = Path(args.output)
-        output_dir.mkdir(parents=True, exist_ok=True)
-        try:
-            output_path = core.extract_frame(args.video, args.time, args.output)
-            logger.info(f"Frame at {args.time} seconds saved as {output_path}")
-        except Exception as e:
-            logger.error(f"An error occurred: {str(e)}")
-    elif args.command == "capture":
-        try:
-            core.capture_and_save_images(args.camera, args.save_dir)
-        except Exception as e:
-            logger.error(f"An error occurred: {str(e)}")
+    try:
+        if parsed_args.command == "coords":
+            core.mark_coordinates(parsed_args.image_path, parsed_args.ratio)
+            return 0
+        elif parsed_args.command == "frame":
+            output_dir = Path(parsed_args.output)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_path = core.extract_frame(
+                parsed_args.video, parsed_args.time, parsed_args.output
+            )
+            logger.info(f"Frame at {parsed_args.time} seconds saved as {output_path}")
+            return 0
+        elif parsed_args.command == "capture":
+            core.capture_and_save_images(parsed_args.camera, parsed_args.save_dir)
+            return 0
+        return 0
+    except Exception as e:
+        logger.error(f"An error occurred: {str(e)}")
+        return 1
