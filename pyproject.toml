@@ -55,6 +55,7 @@ image_tool = [
 # Dependencies for the ytmusic_dl tool
 ytmusic_dl = [
     "yt-dlp",
+    "yt-dlp-ejs",
     "mutagen",
 ]
 
