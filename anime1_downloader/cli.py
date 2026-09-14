@@ -266,7 +266,8 @@ class Anime1Downloader:
 
         ydl_opts = {
             "concurrent_fragment_downloads": 32,
-            "cookiejar": cookie_jar,
+            "js_runtimes": {"node": {}, "deno": {}, "bun": {}},
+            "remote_components": ["ejs:github"],
             "verbose": logger.isEnabledFor(logging.DEBUG),
             "outtmpl": safe_title + ".%(ext)s",
             "paths": {"home": str(final_output_dir)},
@@ -279,6 +280,8 @@ class Anime1Downloader:
         logger.info("Passing info for '%s' to yt-dlp for download...", title)
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            for c in cookie_jar:
+                ydl.cookiejar.set_cookie(c)
             ydl.download([src])
 
     def _process_single_episode(self, video_tuple, anime_series_name, task_id, progress):
