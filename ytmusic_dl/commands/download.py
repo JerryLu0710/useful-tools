@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 import sys
@@ -293,6 +294,13 @@ def download_command(args):
         **cookie_opts,
     }
 
+    # Prepare unauthenticated fallback options if cookie authentication is enabled
+    fallback_ydl_opts = None
+    fallback_meta_ydl_opts = None
+    if cookie_opts:
+        fallback_ydl_opts = {k: v for k, v in ydl_opts.items() if k not in cookie_opts}
+        fallback_meta_ydl_opts = {k: v for k, v in meta_ydl_opts.items() if k not in cookie_opts}
+
     # Statistics
     downloaded_count = 0
     skipped_count = 0
@@ -300,7 +308,16 @@ def download_command(args):
     failed_videos = []
 
     # Process each video
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl, yt_dlp.YoutubeDL(meta_ydl_opts) as meta_ydl:
+    with (
+        yt_dlp.YoutubeDL(ydl_opts) as ydl,
+        yt_dlp.YoutubeDL(meta_ydl_opts) as meta_ydl,
+        yt_dlp.YoutubeDL(fallback_ydl_opts)
+        if fallback_ydl_opts
+        else contextlib.nullcontext() as fallback_ydl,
+        yt_dlp.YoutubeDL(fallback_meta_ydl_opts)
+        if fallback_meta_ydl_opts
+        else contextlib.nullcontext() as fallback_meta_ydl,
+    ):
         for idx, video in enumerate(videos, 1):
             if video is None:
                 continue
@@ -318,10 +335,25 @@ def download_command(args):
                         download=False,
                     )
                 except Exception as e:
-                    logger.error(f"Failed to get info for video {video_id}: {e}")
-                    failed_count += 1
-                    failed_videos.append(video_id)
-                    continue
+                    if fallback_meta_ydl:
+                        logger.warning(
+                            f"Metadata extraction with cookies failed for {video_id}: {e}. Retrying without cookies..."
+                        )
+                        try:
+                            video = fallback_meta_ydl.extract_info(
+                                f"https://music.youtube.com/watch?v={video_id}",
+                                download=False,
+                            )
+                        except Exception as fallback_e:
+                            logger.error(f"Failed to get info for video {video_id}: {fallback_e}")
+                            failed_count += 1
+                            failed_videos.append(video_id)
+                            continue
+                    else:
+                        logger.error(f"Failed to get info for video {video_id}: {e}")
+                        failed_count += 1
+                        failed_videos.append(video_id)
+                        continue
 
             artist, artist_source = extract_artist(video)
             title = video.get("title", "Unknown")
@@ -359,18 +391,46 @@ def download_command(args):
                     skipped_count += 1
                     continue
 
-                ydl.params["outtmpl"]["default"] = build_duplicate_output_template(
+                target_outtmpl = build_duplicate_output_template(
                     output_path, title, artist, video_id
                 )
             else:
-                ydl.params["outtmpl"]["default"] = default_output_template
+                target_outtmpl = default_output_template
+
+            ydl.params["outtmpl"]["default"] = target_outtmpl
 
             try:
                 info = ydl.extract_info(
                     f"https://music.youtube.com/watch?v={video_id}", download=True
                 )
-                # logger.info(f"Info: {json.dumps(info, indent=2)}")
+                if info is None and fallback_ydl:
+                    raise RuntimeError("Download failed with cookies (no info returned)")
+            except Exception as e:
+                if fallback_ydl:
+                    logger.warning(
+                        f"Authenticated download failed for {video_id}: {e}. Retrying without cookies..."
+                    )
+                    fallback_ydl.params["outtmpl"]["default"] = target_outtmpl
+                    try:
+                        info = fallback_ydl.extract_info(
+                            f"https://music.youtube.com/watch?v={video_id}", download=True
+                        )
+                    except Exception as fallback_err:
+                        logger.error(f"✗ Failed to download {video_id}: {fallback_err}")
+                        failed_count += 1
+                        failed_videos.append(f"{artist} - {title} ({video_id})")
+                        if not is_playlist:
+                            sys.exit(1)
+                        continue
+                else:
+                    logger.error(f"✗ Failed to download {video_id}: {e}")
+                    failed_count += 1
+                    failed_videos.append(f"{artist} - {title} ({video_id})")
+                    if not is_playlist:
+                        sys.exit(1)
+                    continue
 
+            try:
                 # With ignoreerrors="only_download", yt-dlp returns None
                 # or omits requested_downloads when the download fails
                 if info is None:
@@ -409,7 +469,7 @@ def download_command(args):
                 downloaded_count += 1
 
             except Exception as e:
-                logger.error(f"✗ Failed to download {video_id}: {e}")
+                logger.error(f"✗ Failed to process output for {video_id}: {e}")
                 failed_count += 1
                 failed_videos.append(f"{artist} - {title} ({video_id})")
 
