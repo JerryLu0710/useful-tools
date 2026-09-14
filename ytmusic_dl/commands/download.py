@@ -110,7 +110,7 @@ def get_video_info(url: str, cookie_opts: dict | None = None) -> tuple[list[dict
     js_opts = _build_js_opts()
     ydl_opts = {
         "quiet": True,
-        "no_warnings": True,
+        "no_warnings": logger.level != logging.DEBUG,
         "extract_flat": "in_playlist",
         **js_opts,
         **cookie_opts,
@@ -275,7 +275,7 @@ def download_command(args):
         "writethumbnail": download_options["embed_thumbnail"],
         "convert_thumbnails": "jpg",
         "quiet": logger.level != logging.DEBUG,
-        "no_warnings": True,
+        "no_warnings": logger.level != logging.DEBUG,
         "extract_flat": "discard_in_playlist",
         "fragment_retries": 10,
         "retries": 10,
@@ -286,7 +286,12 @@ def download_command(args):
     }
 
     # yt-dlp options for fetching metadata
-    meta_ydl_opts = {"quiet": True, "no_warnings": True, **js_opts, **cookie_opts}
+    meta_ydl_opts = {
+        "quiet": logger.level != logging.DEBUG,
+        "no_warnings": logger.level != logging.DEBUG,
+        **js_opts,
+        **cookie_opts,
+    }
 
     # Statistics
     downloaded_count = 0
