@@ -57,8 +57,8 @@ def main():
     download_parser.add_argument(
         "-q",
         "--quality",
-        default="141/bestaudio[ext=m4a]/bestaudio",
-        help="Quality selection (default: 141/bestaudio[ext=m4a]/bestaudio)",
+        default="bestaudio[abr>=200][ext=m4a]/bestaudio[ext=m4a]/bestaudio",
+        help="Quality selection (default: bestaudio[abr>=200][ext=m4a]/bestaudio[ext=m4a]/bestaudio)",
     )
     download_parser.add_argument(
         "-hi",
@@ -163,8 +163,8 @@ def main():
     migrate_parser.add_argument(
         "-q",
         "--quality",
-        default="141/bestaudio[ext=m4a]/bestaudio",
-        help="Quality selection (default: 141/bestaudio[ext=m4a]/bestaudio)",
+        default="bestaudio[abr>=200][ext=m4a]/bestaudio[ext=m4a]/bestaudio",
+        help="Quality selection (default: bestaudio[abr>=200][ext=m4a]/bestaudio[ext=m4a]/bestaudio)",
     )
     migrate_parser.add_argument(
         "-hi",
