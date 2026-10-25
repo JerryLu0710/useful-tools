@@ -12,7 +12,7 @@ from mutagen import File as MutagenFile
 from yt_dlp.utils import sanitize_filename
 
 from ytmusic_dl.common.logger import logger
-from ytmusic_dl.common.utils import extract_artist
+from ytmusic_dl.common.utils import extract_artist, tag_values
 
 HONG_KONG_TZ = ZoneInfo("Asia/Hong_Kong")
 
@@ -192,16 +192,10 @@ def read_artist_tag(path: Path) -> str | None:
     if audio_file is None:
         return None
 
-    # mutagen raises for keys a container does not support at all, so each key is
-    # tried on its own instead of wrapping the whole scan.
     for key in ARTIST_TAG_KEYS:
-        try:
-            value = audio_file[key]
-        except Exception:
-            continue
-        text = str(value[0] if isinstance(value, list) else value).strip()
-        if text:
-            return text
+        values = tag_values(audio_file, key)
+        if values:
+            return values[0]
     return None
 
 

@@ -6,7 +6,7 @@ from pathlib import Path
 from mutagen import File as MutagenFile
 
 from ytmusic_dl.common.logger import logger
-from ytmusic_dl.common.utils import YOUTUBE_ID_REGEX
+from ytmusic_dl.common.utils import YOUTUBE_ID_REGEX, tag_values
 
 # --- List of keys to check for the ID, in order of priority ---
 ID_METADATA_KEYS = [
@@ -52,43 +52,40 @@ def extract_id_from_file(file_path: Path, scan_all: bool) -> str | None:
     """
     try:
         audio_file = MutagenFile(file_path)
-        if audio_file is None:
-            return None
-
-        # 1. Prioritized Scan
-        for key, use_regex in ID_METADATA_KEYS:
-            if key in audio_file:
-                value = audio_file[key]
-                text_content = str(value[0] if isinstance(value, list) else value)
-
-                if not use_regex:
-                    # The tag directly contains the ID
-                    return text_content.strip()
-
-                # The tag contains a URL that needs to be parsed
-                match = YOUTUBE_ID_REGEX.search(text_content)
-                if match:
-                    return match.group(1)
-
-        # 2. Full Scan (if enabled and necessary)
-        if scan_all:
-            for key in audio_file:
-                # Skip keys we've already checked
-                if key in [k[0] for k in ID_METADATA_KEYS]:
-                    continue
-
-                values = audio_file[key]
-                if not isinstance(values, list):
-                    values = [values]
-                for value in values:
-                    text_content = str(value)
-                    match = YOUTUBE_ID_REGEX.search(text_content)
-                    if match:
-                        return match.group(1)
-
     except Exception:
         # Ignore files that can't be read by mutagen
         return None
+    if audio_file is None:
+        return None
+
+    # 1. Prioritized Scan
+    for key, use_regex in ID_METADATA_KEYS:
+        values = tag_values(audio_file, key)
+        if not values:
+            continue
+
+        if not use_regex:
+            # The tag directly contains the ID
+            return values[0]
+
+        # The tag contains a URL that needs to be parsed
+        match = YOUTUBE_ID_REGEX.search(values[0])
+        if match:
+            return match.group(1)
+
+    # 2. Full Scan (if enabled and necessary)
+    if scan_all:
+        checked = {key for key, _ in ID_METADATA_KEYS}
+        for key in audio_file:
+            # Skip keys we've already checked
+            if key in checked:
+                continue
+
+            for text in tag_values(audio_file, key):
+                match = YOUTUBE_ID_REGEX.search(text)
+                if match:
+                    return match.group(1)
+
     return None
 
 
