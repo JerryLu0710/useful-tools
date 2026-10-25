@@ -68,6 +68,16 @@ def test_duplicate_output_template_uses_artist_field_without_collision(tmp_path:
     assert template == str(tmp_path / "%(title)s - %(artist,channel,uploader)s.%(ext)s")
 
 
+def test_without_cookies_keeps_every_option_except_the_cookies() -> None:
+    """The unauthenticated retry must differ from the authenticated run by cookies only."""
+    cookie_opts = {"cookiesfrombrowser": ("chrome",)}
+    opts = {"format": "bestaudio", "outtmpl": {"default": "%(title)s.%(ext)s"}, **cookie_opts}
+
+    guest_opts = download_module._without_cookies(opts, cookie_opts)
+
+    assert guest_opts == {"format": "bestaudio", "outtmpl": {"default": "%(title)s.%(ext)s"}}
+
+
 @pytest.mark.parametrize(
     "title", ["Song [Live]", "Rock/Roll", "Don't: Cry Now", "..trailing dots.."]
 )

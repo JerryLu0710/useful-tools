@@ -284,6 +284,88 @@ def build_duplicate_output_template(
     return str(output_path / f"%(title)s - {ARTIST_TEMPLATE}{suffix}.%(ext)s")
 
 
+def _cookie_opts(args) -> dict:
+    """Build the yt-dlp cookie options from the mutually exclusive CLI flags."""
+    if args.browser:
+        return {"cookiesfrombrowser": (args.browser,)}
+    if args.cookies:
+        return {"cookiefile": str(args.cookies)}
+    return {}
+
+
+def _postprocessors(audio_format: str, add_metadata: bool, embed_thumbnail: bool) -> list[dict]:
+    """Build the yt-dlp postprocessor chain for the requested output."""
+    postprocessors = []
+
+    # Add conversion postprocessor only if a specific format is requested
+    if audio_format != "best":
+        postprocessors.append(
+            {
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": audio_format,
+                "preferredquality": "0",  # Use highest VBR quality for conversions
+                "nopostoverwrites": False,
+            }
+        )
+
+    if add_metadata:
+        postprocessors.append(
+            {
+                "key": "FFmpegMetadata",
+                "add_metadata": True,
+                "add_chapters": True,
+                "add_infojson": "if_exists",
+            }
+        )
+
+    if embed_thumbnail:
+        postprocessors.extend(
+            [
+                {"key": "FFmpegThumbnailsConvertor", "format": "jpg", "when": "before_dl"},
+                {"key": "EmbedThumbnail", "already_have_thumbnail": False},
+            ]
+        )
+
+    return postprocessors
+
+
+def _download_opts(args, output_path: Path, cookie_opts: dict) -> dict:
+    """Build the yt-dlp options used for the download itself."""
+    embed_thumbnail = not args.no_thumbnail
+
+    return {
+        "format": args.quality,
+        "outtmpl": {"default": str(output_path / "%(title)s.%(ext)s")},
+        "postprocessors": _postprocessors(args.audio_format, not args.no_metadata, embed_thumbnail),
+        "writethumbnail": embed_thumbnail,
+        "convert_thumbnails": "jpg",
+        "quiet": logger.level != logging.DEBUG,
+        "no_warnings": logger.level != logging.DEBUG,
+        "extract_flat": "discard_in_playlist",
+        "fragment_retries": 10,
+        "retries": 10,
+        "ignoreerrors": "only_download",
+        "extractor_args": {"youtube": {"lang": ["ja"]}},
+        **_build_js_opts(),
+        **cookie_opts,
+    }
+
+
+def _meta_opts(cookie_opts: dict) -> dict:
+    """Build the yt-dlp options used for extraction without downloading."""
+    return {
+        "quiet": logger.level != logging.DEBUG,
+        "no_warnings": logger.level != logging.DEBUG,
+        **_build_js_opts(),
+        **cookie_opts,
+    }
+
+
+def _without_cookies(opts: dict, cookie_opts: dict) -> dict:
+    """Copy of ``opts`` without the cookie entries, for the unauthenticated retry."""
+    return {key: value for key, value in opts.items() if key not in cookie_opts}
+
+
 def download_command(args):
     """Main logic for the download command."""
     # Convert paths
@@ -304,11 +386,7 @@ def download_command(args):
         logger.info(f"Found {len(downloaded_ids)} previously downloaded tracks")
 
     # Build cookie options early so they are available for info extraction
-    cookie_opts: dict = {}
-    if args.browser:
-        cookie_opts["cookiesfrombrowser"] = (args.browser,)
-    elif args.cookies:
-        cookie_opts["cookiefile"] = str(args.cookies)
+    cookie_opts = _cookie_opts(args)
 
     # Get video information from all URLs
     all_videos = []
@@ -328,91 +406,15 @@ def download_command(args):
     if is_playlist:
         logger.info(f"Found a total of {len(videos)} videos from all provided URLs.")
 
-    # Download options
-    download_options = {
-        "audio_format": args.audio_format,
-        "quality": args.quality,
-        "embed_thumbnail": not args.no_thumbnail,
-        "add_metadata": not args.no_metadata,
-    }
-
-    # Build output template
-    # output_template = str(output_path / "%(artist,channel,uploader)s - %(title)s.%(ext)s")
-    default_output_template = str(output_path / "%(title)s.%(ext)s")
-
-    # Build postprocessors list
-    postprocessors = []
-
-    # Add conversion postprocessor only if a specific format is requested
-    if download_options["audio_format"] != "best":
-        postprocessors.append(
-            {
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": download_options["audio_format"],
-                "preferredquality": "0",  # Use highest VBR quality for conversions
-                "nopostoverwrites": False,
-            }
-        )
-
-    if download_options["add_metadata"]:
-        postprocessors.append(
-            {
-                "key": "FFmpegMetadata",
-                "add_metadata": True,
-                "add_chapters": True,
-                "add_infojson": "if_exists",
-            }
-        )
-    if download_options["embed_thumbnail"]:
-        postprocessors.extend(
-            [
-                {
-                    "key": "FFmpegThumbnailsConvertor",
-                    "format": "jpg",
-                    "when": "before_dl",
-                },
-                {
-                    "key": "EmbedThumbnail",
-                    "already_have_thumbnail": False,
-                },
-            ]
-        )
-
-    # Find Node.js for JS-based extractors
-    js_opts = _build_js_opts()
-
-    # yt-dlp options for downloading
-    ydl_opts = {
-        "format": download_options["quality"],
-        "outtmpl": {"default": default_output_template},
-        "postprocessors": postprocessors,
-        "writethumbnail": download_options["embed_thumbnail"],
-        "convert_thumbnails": "jpg",
-        "quiet": logger.level != logging.DEBUG,
-        "no_warnings": logger.level != logging.DEBUG,
-        "extract_flat": "discard_in_playlist",
-        "fragment_retries": 10,
-        "retries": 10,
-        "ignoreerrors": "only_download",
-        "extractor_args": {"youtube": {"lang": ["ja"]}},
-        **js_opts,
-        **cookie_opts,
-    }
-
-    # yt-dlp options for fetching metadata
-    meta_ydl_opts = {
-        "quiet": logger.level != logging.DEBUG,
-        "no_warnings": logger.level != logging.DEBUG,
-        **js_opts,
-        **cookie_opts,
-    }
+    ydl_opts = _download_opts(args, output_path, cookie_opts)
+    meta_ydl_opts = _meta_opts(cookie_opts)
+    # Captured up front: yt-dlp keeps only a shallow copy of the options, so the
+    # inner outtmpl dict is shared and the loop rewrites it per track.
+    default_outtmpl = ydl_opts["outtmpl"]["default"]
 
     # Prepare unauthenticated fallback options if cookie authentication is enabled
-    fallback_ydl_opts = None
-    fallback_meta_ydl_opts = None
-    if cookie_opts:
-        fallback_ydl_opts = {k: v for k, v in ydl_opts.items() if k not in cookie_opts}
-        fallback_meta_ydl_opts = {k: v for k, v in meta_ydl_opts.items() if k not in cookie_opts}
+    fallback_ydl_opts = _without_cookies(ydl_opts, cookie_opts) if cookie_opts else None
+    fallback_meta_ydl_opts = _without_cookies(meta_ydl_opts, cookie_opts) if cookie_opts else None
 
     # Statistics
     downloaded_count = 0
@@ -516,7 +518,7 @@ def download_command(args):
                     output_path, title, artist, video_id
                 )
             else:
-                target_outtmpl = default_output_template
+                target_outtmpl = default_outtmpl
 
             ydl.params["outtmpl"]["default"] = target_outtmpl
 
