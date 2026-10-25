@@ -257,8 +257,9 @@ class Anime1Downloader:
         final_output_dir = Path(self.args.output_dir) / safe_series_name
         final_output_dir.mkdir(parents=True, exist_ok=True)
 
+        # No concurrent_fragment_downloads on purpose: this host is behind Cloudflare,
+        # and 32 fragments per episode across 4 workers gets the IP blocked.
         ydl_opts = {
-            "concurrent_fragment_downloads": 32,
             "js_runtimes": {"node": {}, "deno": {}, "bun": {}},
             "remote_components": ["ejs:github"],
             "verbose": logger.isEnabledFor(logging.DEBUG),
