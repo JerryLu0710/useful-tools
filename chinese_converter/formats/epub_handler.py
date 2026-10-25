@@ -38,10 +38,15 @@ class EPUBHandler(BaseFormatHandler):
 
         try:
             # Use existing process() method
-            if self.process():
-                # Use existing save_as() method
-                return self.save_as(str(output_path))
-            return False
+            if not self.process():
+                return False
+            if self.stats["errors"]:
+                # A file inside the book failed, so the output is only partly converted.
+                logger.error(f"{self.stats['errors']} file(s) inside the EPUB failed to convert")
+                return False
+
+            # Use existing save_as() method
+            return self.save_as(str(output_path))
         finally:
             self.cleanup()
 

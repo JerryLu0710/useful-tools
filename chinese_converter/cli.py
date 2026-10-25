@@ -39,14 +39,6 @@ class ChineseTextConverter:
         logger.info(f"Converting: {input_path} -> {output_path}")
         start_time = time.time()
 
-        # Create backup
-        if create_backup:
-            backup_path = Path(input_path).with_suffix(
-                Path(input_path).suffix + Config.BACKUP_SUFFIX
-            )
-            backup_path.write_bytes(Path(input_path).read_bytes())
-            logger.info(f"Backup created: {backup_path}")
-
         try:
             handler = get_handler(input_path, self.converter)
 
@@ -55,6 +47,14 @@ class ChineseTextConverter:
             if not valid:
                 logger.error(f"Invalid file: {'; '.join(errors)}")
                 return False
+
+            # Only copy an input that is known to be convertible
+            if create_backup:
+                backup_path = Path(input_path).with_suffix(
+                    Path(input_path).suffix + Config.BACKUP_SUFFIX
+                )
+                backup_path.write_bytes(Path(input_path).read_bytes())
+                logger.info(f"Backup created: {backup_path}")
 
             # Process the file
             success = handler.process_file(Path(input_path), Path(output_path))
@@ -77,7 +77,7 @@ class ChineseTextConverter:
             logger.error(f"Conversion failed: {e}")
             return False
 
-    def convert_batch(self, input_dir: str, output_dir: str) -> dict:
+    def convert_batch(self, input_dir: str, output_dir: str, create_backup: bool = True) -> dict:
         """Convert all supported files in a directory."""
         input_path = Path(input_dir)
         output_path = Path(output_dir)
@@ -93,7 +93,7 @@ class ChineseTextConverter:
         results = {}
         for file_path in supported_files:
             output_file = output_path / file_path.name
-            success = self.convert_file(str(file_path), str(output_file))
+            success = self.convert_file(str(file_path), str(output_file), create_backup)
             results[str(file_path)] = success
 
         successful = sum(1 for success in results.values() if success)
@@ -144,8 +144,10 @@ def main(args: list[str] | None = None) -> int:
 
     try:
         if parsed_args.batch:
-            converter.convert_batch(parsed_args.input, parsed_args.output)
-            return 0
+            results = converter.convert_batch(
+                parsed_args.input, parsed_args.output, not parsed_args.no_backup
+            )
+            return 0 if all(results.values()) else 1
         else:
             success = converter.convert_file(
                 parsed_args.input, parsed_args.output, not parsed_args.no_backup

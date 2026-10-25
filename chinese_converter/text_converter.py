@@ -36,8 +36,10 @@ class ChineseConverter:
         try:
             return self.converter.convert(text)
         except Exception as e:
+            # Returning the input text here would write an unconverted file and
+            # still report success.
             logger.error(f"Conversion error: {e}")
-            return text
+            raise
 
     def _has_chinese(self, text: str) -> bool:
         """Check if text contains Chinese characters."""
