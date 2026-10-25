@@ -15,3 +15,7 @@ class YTMusicDLConfig(BaseConfig):
             str(Path.home() / ".ytmusic_dl" / "history.jsonl"),
         )
     )
+
+    # Quality-based selectors never hard-fail on a missing format ID, unlike the
+    # hard-coded Premium format 141, which is absent without a Premium account.
+    DEFAULT_QUALITY = "bestaudio[abr>=200][ext=m4a]/bestaudio[ext=m4a]/bestaudio"

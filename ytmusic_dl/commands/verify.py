@@ -117,7 +117,7 @@ def download_missing_songs(missing_ids: list[str]):
         output=YTMusicDLConfig.DEFAULT_DOWNLOAD_DIR,
         history=YTMusicDLConfig.DEFAULT_HISTORY_FILE,
         audio_format="best",
-        quality="141/bestaudio[ext=m4a]/bestaudio",
+        quality=YTMusicDLConfig.DEFAULT_QUALITY,
         no_thumbnail=False,
         no_metadata=False,
         force=False,

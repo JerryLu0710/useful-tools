@@ -57,8 +57,8 @@ def main():
     download_parser.add_argument(
         "-q",
         "--quality",
-        default="bestaudio[abr>=200][ext=m4a]/bestaudio[ext=m4a]/bestaudio",
-        help="Quality selection (default: bestaudio[abr>=200][ext=m4a]/bestaudio[ext=m4a]/bestaudio)",
+        default=YTMusicDLConfig.DEFAULT_QUALITY,
+        help=f"Quality selection (default: {YTMusicDLConfig.DEFAULT_QUALITY})",
     )
     download_parser.add_argument(
         "-hi",
@@ -166,8 +166,8 @@ def main():
     migrate_parser.add_argument(
         "-q",
         "--quality",
-        default="bestaudio[abr>=200][ext=m4a]/bestaudio[ext=m4a]/bestaudio",
-        help="Quality selection (default: bestaudio[abr>=200][ext=m4a]/bestaudio[ext=m4a]/bestaudio)",
+        default=YTMusicDLConfig.DEFAULT_QUALITY,
+        help=f"Quality selection (default: {YTMusicDLConfig.DEFAULT_QUALITY})",
     )
     migrate_parser.add_argument(
         "-hi",
