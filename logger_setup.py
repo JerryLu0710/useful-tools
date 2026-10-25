@@ -75,20 +75,6 @@ class LoggerSetup:
 
         return logger
 
-    @classmethod
-    def configure_root_logger(cls):
-        """Configure the root logger with project settings."""
-        root_logger = logging.getLogger()
-        root_logger.setLevel(Config.LOG_LEVEL)
-
-        # Remove existing handlers
-        for handler in root_logger.handlers[:]:
-            root_logger.removeHandler(handler)
-
-        # Add our handlers
-        if not root_logger.handlers:
-            cls.get_logger("root", "application")
-
 
 # Convenience function for easy import
 def get_logger(name: str, script_name: str | None = None) -> logging.Logger:

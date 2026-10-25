@@ -8,7 +8,6 @@ packages = [
     "anime1_downloader",
     "image_tool",
     "ytmusic_dl",
-    "utils",
 ]
 
 [project]
@@ -34,7 +33,6 @@ dev = [
 chinese_converter = [
     "opencc-python-reimplemented~=0.1.7",
     "lxml>=4.9.0",
-    "ebooklib>=0.18",
     "beautifulsoup4>=4.11.0",
 ]
 

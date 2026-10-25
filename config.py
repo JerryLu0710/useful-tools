@@ -60,10 +60,6 @@ class Config:
     TEMP_DIR_PREFIX = os.getenv("TEMP_DIR_PREFIX", "utility_temp_")
     BACKUP_SUFFIX = os.getenv("BACKUP_SUFFIX", ".backup")
 
-    # Performance settings
-    MAX_WORKERS = int(os.getenv("MAX_WORKERS", 4))
-    CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 8192))
-
     @classmethod
     def ensure_directories(cls):
         """Create necessary directories if they don't exist."""

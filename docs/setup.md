@@ -164,15 +164,6 @@ Each utility has its own configuration section. See the tool-specific documentat
 - [Image Tool Configuration](tools/image_tool.md#configuration)
 - [YouTube Music Downloader Configuration](tools/ytmusic_dl.md#configuration)
 
-### Performance Settings
-
-These settings can be used by multiple utilities:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MAX_WORKERS` | `4` | Maximum number of concurrent workers for parallel processing |
-| `CHUNK_SIZE` | `8192` | Default chunk size for file operations (bytes) |
-
 ## Special Considerations
 
 ### WSL (Windows Subsystem for Linux) Users
