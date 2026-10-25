@@ -211,9 +211,12 @@ def rename_title_only_files(
     """Rename ``Title.ext`` files to ``Title - Artist.ext`` so a shared title uses
     one naming scheme instead of a mix that depends on download order.
 
-    The artist comes from the history entry for that exact file, optionally
-    falling back to the file's own tags. The rename is recorded by appending a
-    superseding history line, keeping the history file append-only.
+    The title and artist both come from the history entry that owns the file,
+    falling back to the given title and, optionally, the file's own tags. On a
+    case-insensitive filesystem a title-only file is reachable under another
+    track's title casing, and the entry is what keeps the file's own casing.
+    The rename is recorded by appending a superseding history line, keeping the
+    history file append-only.
 
     Returns:
         The number of title-only files renamed, or would be renamed for dry_run
@@ -231,7 +234,7 @@ def rename_title_only_files(
             )
             continue
 
-        new_stem = render_filename_stem(title, artist)
+        new_stem = render_filename_stem((entry or {}).get("title") or title, artist)
         new_audio = audio_file.with_name(new_stem + audio_file.name[len(stem) :])
         if new_audio.exists():
             logger.warning(

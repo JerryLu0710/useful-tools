@@ -182,6 +182,24 @@ def test_rename_title_only_files_leaves_file_alone_when_target_exists(tmp_path: 
     assert not (tmp_path / "history.jsonl").exists()
 
 
+def test_rename_title_only_files_keeps_the_title_casing_of_the_file(tmp_path: Path) -> None:
+    """The file's own history entry names it, not the other track's title.
+
+    The loop title here is 'Remember' while the entry's title is 'remember',
+    which is what a case-insensitive folder hands over when two songs differ
+    only in title casing.
+    """
+    bare = tmp_path / "Remember.m4a"
+    bare.touch()
+    (tmp_path / "Remember - yama.m4a").touch()
+    entry = _history_entry("id-1", "remember", "Uru", bare)
+
+    rename_title_only_files(tmp_path, "Remember", {str(bare): entry}, tmp_path / "history.jsonl")
+
+    assert (tmp_path / "remember - Uru.m4a").exists()
+    assert not (tmp_path / "Remember - Uru.m4a").exists()
+
+
 def test_rename_title_only_files_renames_every_format_of_a_song(tmp_path: Path) -> None:
     """Owning one song as both mp3 and m4a must not leave one of them title-only."""
     mp3 = tmp_path / "Song.mp3"
