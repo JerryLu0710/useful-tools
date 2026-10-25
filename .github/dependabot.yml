@@ -1,0 +1,11 @@
+version: 2
+
+updates:
+  # yt-dlp carries the site fixes, so a bump should arrive on its own instead of
+  # waiting behind other packages. CI runs ruff and pytest on the PR, which covers
+  # renamed options and postprocessor keys; a live download check is still manual.
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
