@@ -9,7 +9,7 @@ from ytmusic_dl.commands.verify import extract_id_from_file
 from ytmusic_dl.config import YTMusicDLConfig
 
 
-def test_download_missing_songs_uses_the_cli_quality_default(
+def test_download_missing_songs_args_match_the_cli_defaults(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A hard-coded format ID hard-fails without Premium, so reuse the CLI default."""
@@ -22,6 +22,7 @@ def test_download_missing_songs_uses_the_cli_quality_default(
     verify_module.download_missing_songs(["video-id"])
 
     assert captured["quality"] == YTMusicDLConfig.DEFAULT_QUALITY
+    assert captured["prompt_on_duplicate"] is False
 
 
 @pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg is required")

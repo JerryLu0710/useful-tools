@@ -121,6 +121,8 @@ def download_missing_songs(missing_ids: list[str]):
         dry_run=False,
         browser=None,
         cookies=None,
+        # Verification never waits for input; it renames without asking.
+        prompt_on_duplicate=False,
     )
 
     try:

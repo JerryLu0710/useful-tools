@@ -96,24 +96,26 @@ def migrate_command(args):
     logger.info(f"Found {len(video_ids)} songs to redownload. Starting batch process...")
 
     from ytmusic_dl.commands.download import download_command
-    from ytmusic_dl.config import YTMusicDLConfig
 
     # Build full YouTube Music URLs from video IDs
     urls = [f"https://music.youtube.com/watch?v={vid}" for vid in video_ids]
 
-    # Use CLI args for output/history/quality when provided, otherwise defaults
+    # The migrate parser defines every one of these, so read them directly: an
+    # unreachable getattr default is how a stale quality selector survived here.
     fake_args = Namespace(
         urls=urls,
-        output=getattr(args, "output", YTMusicDLConfig.DEFAULT_DOWNLOAD_DIR),
-        history=getattr(args, "history", YTMusicDLConfig.DEFAULT_HISTORY_FILE),
-        audio_format=getattr(args, "audio_format", "best"),
-        quality=getattr(args, "quality", "141/bestaudio[ext=m4a]/bestaudio"),
-        no_thumbnail=getattr(args, "no_thumbnail", False),
-        no_metadata=getattr(args, "no_metadata", False),
-        force=getattr(args, "force", False),
-        dry_run=getattr(args, "dry_run", False),
-        browser=getattr(args, "browser", None),
-        cookies=getattr(args, "cookies", None),
+        output=args.output,
+        history=args.history,
+        audio_format=args.audio_format,
+        quality=args.quality,
+        no_thumbnail=args.no_thumbnail,
+        no_metadata=args.no_metadata,
+        force=args.force,
+        dry_run=args.dry_run,
+        browser=args.browser,
+        cookies=args.cookies,
+        # A batch redownload never waits for input; it renames without asking.
+        prompt_on_duplicate=False,
     )
 
     try:

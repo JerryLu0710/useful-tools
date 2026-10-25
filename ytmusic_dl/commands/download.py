@@ -502,10 +502,9 @@ def download_command(args):
                     f"Found {len(existing_files)} existing audio file(s) with title '{title}'."
                 )
 
-                # This option intentionally belongs only to the download CLI.
-                # Internal callers without the argument retain their current
-                # non-interactive behavior.
-                prompt_on_duplicate = getattr(args, "prompt_on_duplicate", False)
+                # migrate and verify pass prompt_on_duplicate=False so batch runs
+                # rename title-only files without waiting for input.
+                prompt_on_duplicate = args.prompt_on_duplicate
                 if prompt_on_duplicate and not confirm_duplicate_download(title, existing_files):
                     logger.info(f"Skipping duplicate-title track: {artist} - {title}")
                     skipped_count += 1
