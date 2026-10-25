@@ -1,10 +1,12 @@
 import os
 from pathlib import Path
 
-from config import Config as BaseConfig
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 
 
-class YTMusicDLConfig(BaseConfig):
+class YTMusicDLConfig:
     """Configuration for ytmusic_dl."""
 
     # Default paths (cross-platform, overridable via environment variables)
