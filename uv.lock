@@ -754,14 +754,14 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 anime1-downloader = [
-    { name = "beautifulsoup4" },
-    { name = "lxml" },
-    { name = "requests" },
-    { name = "rich" },
+    { name = "beautifulsoup4", specifier = ">=4.14.3" },
+    { name = "lxml", specifier = ">=4.9.0" },
+    { name = "requests", specifier = ">=2.34.2" },
+    { name = "rich", specifier = ">=15.0.0" },
     { name = "yt-dlp", specifier = ">=2026.10.21" },
 ]
 chinese-converter = [
-    { name = "beautifulsoup4", specifier = ">=4.11.0" },
+    { name = "beautifulsoup4", specifier = ">=4.14.3" },
     { name = "lxml", specifier = ">=4.9.0" },
     { name = "opencc-python-reimplemented", specifier = "~=0.1.7" },
 ]
@@ -770,11 +770,11 @@ dev = [
     { name = "pytest-cov", specifier = ">=4.0.0" },
     { name = "ruff", specifier = ">=0.14.3" },
 ]
-image-tool = [{ name = "opencv-python" }]
+image-tool = [{ name = "opencv-python", specifier = ">=4.12.0.88" }]
 ytmusic-dl = [
-    { name = "mutagen" },
+    { name = "mutagen", specifier = ">=1.48.1" },
     { name = "yt-dlp", specifier = ">=2026.10.21" },
-    { name = "yt-dlp-ejs" },
+    { name = "yt-dlp-ejs", specifier = ">=0.8.0" },
 ]
 
 [[package]]
