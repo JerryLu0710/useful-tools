@@ -94,13 +94,6 @@ class Anime1Downloader:
         self.downloaded_titles: set[str] = set()
         self.history_path = Path(args.history) if args.history else None
 
-    def _merge_lists(self, list1, list2):
-        """
-        Merges elements of two lists into a list of tuples in order.
-        For example: [a, b], [1, 2] -> [(a, 1), (b, 2)]
-        """
-        return list(map(lambda x, y: (x, y), list1, list2))
-
     def _extract_api_path(self):
         """
         Extracts video titles and corresponding API request data (data-apireq)
@@ -154,7 +147,7 @@ class Anime1Downloader:
             logger.error("Fatal: Mismatch between number of videos and titles")
             return None
 
-        merged = self._merge_lists(titles, videos)
+        merged = list(zip(titles, videos, strict=True))
 
         for item in merged:
             logger.info("Title: %s", item[0])
