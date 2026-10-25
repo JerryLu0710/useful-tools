@@ -104,6 +104,7 @@ uv run python -m ytmusic_dl verify [options]
 
 `verify` matches audio files to history by the YouTube ID embedded in their tags, never by
 filename, so renaming files does not disturb verification.
+It scans every audio container a download can produce, so `--format flac` output is verified too.
 Files whose tags carry no ID are listed separately, and `--scan-all` searches every tag value
 for a YouTube URL.
 

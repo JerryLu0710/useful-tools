@@ -1,3 +1,4 @@
+import logging
 import shutil
 import subprocess
 from argparse import Namespace
@@ -8,6 +9,27 @@ import pytest
 from ytmusic_dl.commands import verify as verify_module
 from ytmusic_dl.commands.verify import extract_id_from_file, verify_command
 from ytmusic_dl.config import YTMusicDLConfig
+
+
+def test_verify_scans_every_format_a_download_can_produce(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """verify must see the containers --format writes, not only mp3/m4a/opus/webm."""
+    history_path = tmp_path / "history.jsonl"
+    history_path.write_text('{"id": "video-id", "title": "Song"}\n', encoding="utf-8")
+    (tmp_path / "Song.flac").write_bytes(b"not really a flac file")
+
+    with caplog.at_level(logging.INFO):
+        verify_command(
+            Namespace(
+                backup_dir=tmp_path,
+                history=history_path,
+                scan_all=False,
+                download_missing=False,
+            )
+        )
+
+    assert "Could not find a YouTube ID in the metadata of 1 files" in caplog.text
 
 
 def test_download_missing_songs_args_match_the_cli_defaults(

@@ -1,7 +1,7 @@
-import json
 from argparse import Namespace
 
 from ytmusic_dl.common.logger import logger
+from ytmusic_dl.common.utils import load_history_entries
 
 
 def _read_ids_from_txt(path) -> list[str]:
@@ -38,33 +38,18 @@ def _read_ids_from_txt(path) -> list[str]:
 
 
 def _read_ids_from_jsonl(path) -> list[str]:
-    """Read video IDs from a JSONL history file.
+    """Read video IDs from a JSONL history file, keeping one entry per ID.
 
-    Each line is expected to be a JSON object with an ``"id"`` key.
+    A rename appends a second line for the same ID, so each ID must become one
+    download URL.
 
     Args:
         path: Path to the JSONL file.
 
     Returns:
-        List of video ID strings.
+        List of video ID strings, in file order.
     """
-    video_ids: list[str] = []
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                entry = json.loads(line)
-                vid = entry.get("id")
-                if vid and vid not in video_ids:
-                    # A rename appends a second line for the same ID, so keep one URL per ID.
-                    video_ids.append(vid)
-                else:
-                    logger.warning(f"Skipping JSONL entry without 'id': {line}")
-            except json.JSONDecodeError:
-                logger.warning(f"Skipping malformed JSONL line: {line}")
-    return video_ids
+    return list(dict.fromkeys(entry["id"] for entry in load_history_entries(path)))
 
 
 def migrate_command(args):

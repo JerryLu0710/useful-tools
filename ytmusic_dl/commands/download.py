@@ -11,7 +11,12 @@ from mutagen import File as MutagenFile
 from yt_dlp.utils import sanitize_filename
 
 from ytmusic_dl.common.logger import logger
-from ytmusic_dl.common.utils import extract_artist, tag_values
+from ytmusic_dl.common.utils import (
+    AUDIO_FILE_EXTENSIONS,
+    extract_artist,
+    load_history_entries,
+    tag_values,
+)
 
 HONG_KONG_TZ = ZoneInfo("Asia/Hong_Kong")
 
@@ -21,22 +26,6 @@ ARTIST_TEMPLATE = "%(artist,channel,uploader)s"
 
 # Artist tag keys to read from an existing file, covering mp3, m4a and opus/webm.
 ARTIST_TAG_KEYS = ("TPE1", "\xa9ART", "----:com.apple.iTunes:ARTIST", "artist")
-
-AUDIO_FILE_EXTENSIONS = frozenset(
-    {
-        ".aac",
-        ".flac",
-        ".m4a",
-        ".m4b",
-        ".mka",
-        ".mp3",
-        ".mp4",
-        ".ogg",
-        ".opus",
-        ".wav",
-        ".webm",
-    }
-)
 
 
 def _build_js_opts() -> dict:
@@ -53,38 +42,6 @@ def _build_js_opts() -> dict:
         "js_runtimes": {"node": {}, "deno": {}, "bun": {}},
         "remote_components": ["ejs:github"],
     }
-
-
-def load_history_entries(history_path: Path) -> list[dict]:
-    """
-    Load history entries from JSONL history file.
-
-    Entries are returned in file order; later lines supersede earlier ones for
-    the same video ID, which is how renames are recorded without rewriting the
-    file.
-
-    Args:
-        history_path: Path to JSONL history file
-
-    Returns:
-        List of history entry dictionaries that carry a video ID
-    """
-    entries = []
-
-    if not history_path.exists():
-        return entries
-
-    try:
-        with open(history_path, encoding="utf-8") as f:
-            for line in f:
-                if line.strip():
-                    entry = json.loads(line)
-                    if entry.get("id"):
-                        entries.append(entry)
-    except Exception as e:
-        logger.warning(f"Error loading history file: {e}")
-
-    return entries
 
 
 def append_to_history(history_path: Path, entry: dict):

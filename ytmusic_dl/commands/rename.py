@@ -1,12 +1,11 @@
 from collections import defaultdict
 
 from ytmusic_dl.commands.download import (
-    AUDIO_FILE_EXTENSIONS,
     find_same_title_files,
-    load_history_entries,
     rename_title_only_files,
 )
 from ytmusic_dl.common.logger import logger
+from ytmusic_dl.common.utils import AUDIO_FILE_EXTENSIONS, load_history_entries
 
 
 def rename_command(args):

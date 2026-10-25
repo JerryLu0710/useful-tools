@@ -1,11 +1,15 @@
-import json
 from argparse import Namespace
 from pathlib import Path
 
 from mutagen import File as MutagenFile
 
 from ytmusic_dl.common.logger import logger
-from ytmusic_dl.common.utils import YOUTUBE_ID_REGEX, tag_values
+from ytmusic_dl.common.utils import (
+    AUDIO_FILE_EXTENSIONS,
+    YOUTUBE_ID_REGEX,
+    load_history_entries,
+    tag_values,
+)
 
 # --- List of keys to check for the ID, in order of priority ---
 ID_METADATA_KEYS = [
@@ -23,21 +27,13 @@ def load_history_ids(history_path: Path) -> dict[str, str]:
     Returns:
         A dictionary mapping video ID to its title.
     """
-    downloaded: dict[str, str] = {}
     if not history_path.exists():
         logger.warning(f"History file not found at '{history_path}'")
-        return downloaded
+        return {}
 
-    with open(history_path, encoding="utf-8") as f:
-        for i, line in enumerate(f, 1):
-            if line.strip():
-                try:
-                    entry = json.loads(line)
-                    vid = entry.get("id")
-                    if vid:
-                        downloaded[vid] = entry.get("title", "Unknown")
-                except json.JSONDecodeError:
-                    logger.warning(f"Could not parse line {i} in history file.")
+    downloaded = {
+        entry["id"]: entry.get("title", "Unknown") for entry in load_history_entries(history_path)
+    }
     logger.info(f"Loaded {len(downloaded)} unique IDs from history file.")
     return downloaded
 
@@ -145,12 +141,11 @@ def verify_command(args):
         return 1
 
     logger.info(f"Scanning for audio files in '{args.backup_dir}'...")
-    audio_files = (
-        list(args.backup_dir.glob("**/*.mp3"))
-        + list(args.backup_dir.glob("**/*.m4a"))
-        + list(args.backup_dir.glob("**/*.opus"))
-        + list(args.backup_dir.glob("**/*.webm"))
-    )
+    audio_files = [
+        path
+        for path in args.backup_dir.glob("**/*")
+        if path.is_file() and path.suffix.lower() in AUDIO_FILE_EXTENSIONS
+    ]
 
     if not audio_files:
         logger.warning("No audio files found in the backup directory.")

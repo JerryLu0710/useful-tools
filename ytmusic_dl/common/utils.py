@@ -1,9 +1,58 @@
+import json
 import re
+from pathlib import Path
 from typing import Any
+
+from ytmusic_dl.common.logger import logger
 
 # Regex to extract YouTube ID from a URL
 # It looks for various youtube URL formats and captures the 11-character ID.
 YOUTUBE_ID_REGEX = re.compile(r"(?:v=|\/|youtu\.be\/|embed\/|shorts\/)([a-zA-Z0-9_-]{11})")
+
+# Every container a downloaded track can end up in, whatever --format asked for.
+AUDIO_FILE_EXTENSIONS = frozenset(
+    {
+        ".aac",
+        ".flac",
+        ".m4a",
+        ".m4b",
+        ".mka",
+        ".mp3",
+        ".mp4",
+        ".ogg",
+        ".opus",
+        ".wav",
+        ".webm",
+    }
+)
+
+
+def load_history_entries(history_path: Path) -> list[dict]:
+    """Read the download history file, keeping every entry after a damaged line.
+
+    Later lines supersede earlier ones for the same video ID, which is how a
+    rename is recorded without rewriting an append-only file.
+    """
+    entries: list[dict] = []
+    if not history_path.exists():
+        return entries
+
+    try:
+        with open(history_path, encoding="utf-8") as f:
+            for number, line in enumerate(f, 1):
+                if not line.strip():
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Could not parse line {number} of '{history_path}': {e}")
+                    continue
+                if entry.get("id"):
+                    entries.append(entry)
+    except Exception as e:
+        logger.warning(f"Error loading history file '{history_path}': {e}")
+
+    return entries
 
 
 def tag_values(audio_file: Any, key: str) -> list[str]:
