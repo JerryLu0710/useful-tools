@@ -298,16 +298,10 @@ class Anime1Downloader:
 
                 # Record to history
                 if self.history_path:
-                    output_path = str(
-                        Path(self.args.output_dir)
-                        / sanitize_filename(anime_series_name)
-                        / sanitize_filename(title)
-                    )
                     entry = create_history_entry(
                         title=title,
                         anime_series=anime_series_name,
                         url=self.args.url,
-                        output_path=output_path,
                     )
                     append_to_history(self.history_path, entry)
                     self.downloaded_titles.add(title)

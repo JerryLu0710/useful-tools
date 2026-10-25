@@ -71,15 +71,16 @@ def create_history_entry(
     title: str,
     anime_series: str,
     url: str,
-    output_path: str,
 ) -> dict:
     """Create a history entry dictionary.
+
+    The saved file path is not recorded: the extension comes from yt-dlp, so a
+    path rebuilt from the title never pointed at a real file.
 
     Args:
         title: Episode title (e.g., "Anime Name [01]")
         anime_series: Anime series name
         url: Original page URL
-        output_path: Path where the video was saved
 
     Returns:
         Dictionary with download metadata
@@ -88,6 +89,5 @@ def create_history_entry(
         "title": title,
         "anime_series": anime_series,
         "url": url,
-        "output_path": output_path,
         "downloaded_at": datetime.now(LOCAL_TZ).isoformat(),
     }

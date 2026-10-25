@@ -106,14 +106,14 @@ class TestCreateHistoryEntry:
             title="Anime Name [05]",
             anime_series="Anime Name",
             url="https://anime1.me/12345",
-            output_path="/downloads/Anime Name/Anime Name [05].mp4",
         )
 
         assert entry["title"] == "Anime Name [05]"
         assert entry["anime_series"] == "Anime Name"
         assert entry["url"] == "https://anime1.me/12345"
-        assert entry["output_path"] == "/downloads/Anime Name/Anime Name [05].mp4"
         assert "downloaded_at" in entry
+        # A path rebuilt from the title has no extension, so it matches no real file.
+        assert "output_path" not in entry
 
     def test_downloaded_at_is_iso_format(self) -> None:
         """Test that downloaded_at is in ISO format."""
@@ -121,7 +121,6 @@ class TestCreateHistoryEntry:
             title="Test",
             anime_series="Test",
             url="https://example.com",
-            output_path="/path",
         )
 
         # Should be parseable as ISO format
