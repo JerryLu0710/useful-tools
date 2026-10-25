@@ -1,0 +1,13 @@
+{
+  "s": [
+    {
+      "src": "//suisei.v.anime1.me/1066/9/playlist.m3u8",
+      "type": "application/x-mpegURL",
+      "withCredentials": true
+    },
+    {
+      "src": "//saki.v.anime1.me/1066/9.mp4",
+      "type": "video/mp4"
+    }
+  ]
+}
