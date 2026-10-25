@@ -28,7 +28,7 @@ uv run python -m ytmusic_dl download URL [URL ...] [options]
 | --- | --- |
 | `-o`, `--output DIRECTORY` | Override the output directory. |
 | `-f`, `--format FORMAT` | Convert audio to a requested format, or use `best`. |
-| `-q`, `--quality SELECTOR` | Override the yt-dlp format selector. |
+| `-q`, `--quality SELECTOR` | Override the yt-dlp format selector. Default: `bestaudio[abr>=200][ext=m4a]/bestaudio[ext=m4a]/bestaudio`. |
 | `-hi`, `--history FILE` | Override the history path. |
 | `-dr`, `--dry-run` | Show planned downloads without downloading. |
 | `--[no-]prompt-on-duplicate` | Confirm before a same-title download renames the existing file. Prompting is enabled by default. |
@@ -52,6 +52,11 @@ and the download still proceeds.
 Renaming happens before the download, and a failed download does not undo it.
 `--dry-run` lists the renames it would perform.
 
+With `--browser` or `--cookies`, a track whose authenticated extraction or download fails is
+retried without cookies, trading Premium 256 kbps audio for guest streams. If both attempts fail
+the track is reported as failed: a single URL exits non-zero, while a playlist continues with the
+next track and lists the failures in its summary.
+
 ```bash
 uv run python -m ytmusic_dl download "https://music.youtube.com/playlist?list=PLAYLIST"
 uv run python -m ytmusic_dl download "URL" --format mp3 --no-prompt-on-duplicate
@@ -69,6 +74,11 @@ uv run python -m ytmusic_dl verify [options]
 | `--history FILE` | History file to compare. |
 | `-s`, `--scan-all` | Deep-scan audio metadata. |
 | `-d`, `--download-missing` | Download tracks missing from history. |
+
+`verify` matches audio files to history by the YouTube ID embedded in their tags, never by
+filename, so renaming files does not disturb verification.
+Files whose tags carry no ID are listed separately, and `--scan-all` searches every tag value
+for a YouTube URL.
 
 ## Extract an ID
 
