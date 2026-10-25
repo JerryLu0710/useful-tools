@@ -4,6 +4,7 @@ from pathlib import Path
 from ytmusic_dl.commands.download import download_command
 from ytmusic_dl.commands.metadata import metadata_command
 from ytmusic_dl.commands.migrate import migrate_command
+from ytmusic_dl.commands.rename import rename_command
 from ytmusic_dl.commands.verify import verify_command
 from ytmusic_dl.common.logger import logger
 from ytmusic_dl.config import YTMusicDLConfig
@@ -201,6 +202,33 @@ def main():
     )
     migrate_parser.add_argument("--force", action="store_true", help="Download even if in history")
     migrate_parser.set_defaults(func=migrate_command)
+
+    # --- Normalize Names Command (Offline Rename) ---
+    rename_parser = subparsers.add_parser(
+        "normalize-names",
+        help="Rename existing title-only files so tracks sharing a title match",
+    )
+    rename_parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=YTMusicDLConfig.DEFAULT_DOWNLOAD_DIR,
+        help=f"Directory to rename files in (default: {YTMusicDLConfig.DEFAULT_DOWNLOAD_DIR})",
+    )
+    rename_parser.add_argument(
+        "-hi",
+        "--history",
+        type=Path,
+        default=YTMusicDLConfig.DEFAULT_HISTORY_FILE,
+        help=f"Path to JSONL history file (default: {YTMusicDLConfig.DEFAULT_HISTORY_FILE})",
+    )
+    rename_parser.add_argument(
+        "-dr",
+        "--dry-run",
+        action="store_true",
+        help="Show the planned renames without renaming anything",
+    )
+    rename_parser.set_defaults(func=rename_command)
 
     args = parser.parse_args()
 

@@ -200,22 +200,34 @@ def read_artist_tag(path: Path) -> str | None:
 
 
 def rename_title_only_files(
-    output_path: Path, title: str, entries_by_path: dict[str, dict], history_path: Path
-) -> None:
+    output_path: Path,
+    title: str,
+    entries_by_path: dict[str, dict],
+    history_path: Path,
+    *,
+    dry_run: bool = False,
+    tag_fallback: bool = True,
+) -> int:
     """Rename ``Title.ext`` files to ``Title - Artist.ext`` so a shared title uses
     one naming scheme instead of a mix that depends on download order.
 
-    The artist comes from the history entry for that exact file, falling back to
-    the file's own tags. The rename is recorded by appending a superseding
-    history line, keeping the history file append-only.
+    The artist comes from the history entry for that exact file, optionally
+    falling back to the file's own tags. The rename is recorded by appending a
+    superseding history line, keeping the history file append-only.
+
+    Returns:
+        The number of title-only files renamed, or would be renamed for dry_run
     """
     stem = render_filename_stem(title)
+    renamed = 0
     for audio_file in find_existing_audio_files(output_path, stem):
         entry = entries_by_path.get(str(audio_file))
-        artist = (entry or {}).get("artist") or read_artist_tag(audio_file)
+        artist = (entry or {}).get("artist")
+        if not artist and tag_fallback:
+            artist = read_artist_tag(audio_file)
         if not artist:
             logger.warning(
-                f"Cannot determine the artist of '{audio_file.name}'. Leaving it title-only."
+                f"No history entry with an artist for '{audio_file.name}'. Leaving it title-only."
             )
             continue
 
@@ -230,6 +242,7 @@ def rename_title_only_files(
         # This glob deliberately takes every file with the stem, not just audio, so
         # sidecars and thumbnails move with the track. A sidecar whose target already
         # exists is left behind rather than renamed over.
+        moved = 0
         for path in output_path.glob(f"{escape(stem)}.*"):
             if not path.is_file():
                 continue
@@ -237,22 +250,32 @@ def rename_title_only_files(
             if new_path.exists():
                 logger.warning(f"'{new_path.name}' already exists. Leaving '{path.name}' as it is.")
                 continue
+            if dry_run:
+                logger.info(f"Would rename '{path.name}' to '{new_path.name}'")
+                moved += 1
+                continue
             try:
                 path.rename(new_path)
             except OSError as e:
                 logger.warning(f"Could not rename '{path.name}': {e}")
                 continue
             logger.info(f"Renamed '{path.name}' to '{new_path.name}'")
+            moved += 1
 
-        if entry and new_audio.exists():
-            append_to_history(
-                history_path,
-                {
-                    **entry,
-                    "file_path": str(new_audio),
-                    "renamed_at": datetime.now(HONG_KONG_TZ).isoformat(),
-                },
-            )
+        if not moved:
+            continue
+        renamed += 1
+        if dry_run or not entry:
+            continue
+        append_to_history(
+            history_path,
+            {
+                **entry,
+                "file_path": str(new_audio),
+                "renamed_at": datetime.now(HONG_KONG_TZ).isoformat(),
+            },
+        )
+    return renamed
 
 
 def confirm_duplicate_download(title: str, existing_files: list[Path]) -> bool:
@@ -490,8 +513,9 @@ def download_command(args):
             # Dry run mode
             if args.dry_run:
                 logger.info(f"[{idx}/{len(videos)}] Would download: {artist} - {title}")
-                for path in find_existing_audio_files(output_path, render_filename_stem(title)):
-                    logger.info(f"    Would rename existing title-only file: {path.name}")
+                rename_title_only_files(
+                    output_path, title, entries_by_path, history_path, dry_run=True
+                )
                 if find_same_title_files(output_path, title):
                     logger.info(
                         f"    Would save the new file as: {render_filename_stem(title, artist)}.*"

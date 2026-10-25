@@ -51,6 +51,7 @@ A file that cannot be renamed, for example on a read-only mount, is reported and
 and the download still proceeds.
 Renaming happens before the download, and a failed download does not undo it.
 `--dry-run` lists the renames it would perform.
+Files that were already named under the older rule are brought into line by `normalize-names`.
 
 With `--browser` or `--cookies`, a track whose authenticated extraction or download fails is
 retried without cookies, trading Premium 256 kbps audio for guest streams. If both attempts fail
@@ -60,6 +61,31 @@ next track and lists the failures in its summary.
 ```bash
 uv run python -m ytmusic_dl download "https://music.youtube.com/playlist?list=PLAYLIST"
 uv run python -m ytmusic_dl download "URL" --format mp3 --no-prompt-on-duplicate
+```
+
+## Normalize Names
+
+```bash
+uv run python -m ytmusic_dl normalize-names [options]
+```
+
+| Option | Purpose |
+| --- | --- |
+| `-o`, `--output DIRECTORY` | Directory to rename files in. |
+| `-hi`, `--history FILE` | History file supplying each file's title and artist. |
+| `-dr`, `--dry-run` | Print the planned renames without renaming anything. |
+
+Renames existing title-only files so that tracks sharing a title follow the same rule `download`
+applies. It runs offline: titles and artists come from the history file and are never guessed from
+a filename, because `Song - Live.m4a` could otherwise be an artist-suffixed `Song` or a bare title
+of its own. Each rename appends a superseding history line.
+A rename is refused when the target filename already exists, so a second run changes nothing.
+Audio files missing from the history file are listed and left alone.
+The scan covers the output directory itself, not subfolders.
+
+```bash
+uv run python -m ytmusic_dl normalize-names -dr
+uv run python -m ytmusic_dl normalize-names -o /mnt/d/Music
 ```
 
 ## Verify
