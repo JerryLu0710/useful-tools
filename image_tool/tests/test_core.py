@@ -6,18 +6,25 @@ from image_tool import cli, core
 
 
 class FakeVideoCapture:
-    def __init__(self, *, opened: bool = True, read_result: tuple[bool, object] = (True, "frame")):
+    def __init__(
+        self,
+        *,
+        opened: bool = True,
+        read_result: tuple[bool, object] = (True, "frame"),
+        fps: float = 30.0,
+    ):
         self.opened = opened
         self.read_result = read_result
         self.released = False
         self.position = None
+        self.fps = fps
 
     def isOpened(self) -> bool:
         return self.opened
 
     def get(self, property_id: int) -> float:
         if property_id == core.cv2.CAP_PROP_FPS:
-            return 30.0
+            return self.fps
         return 120.0
 
     def set(self, property_id: int, value: int) -> None:
@@ -65,6 +72,21 @@ def test_extract_frame_rejects_timestamp_after_end(
     with pytest.raises(ValueError, match="shorter"):
         core.extract_frame("video.mp4", 4, tmp_path)
 
+    assert video.released
+
+
+def test_extract_frame_rejects_a_video_without_a_readable_frame_rate(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """OpenCV reports 0 fps for some streamed files, which used to save frame 0."""
+    video = FakeVideoCapture(fps=0.0)
+    monkeypatch.setattr(core.cv2, "VideoCapture", lambda _path: video)
+    monkeypatch.setattr(core.cv2, "imwrite", lambda _path, _frame: True)
+
+    with pytest.raises(ValueError, match="frame rate"):
+        core.extract_frame("video.mkv", 90, tmp_path)
+
+    assert video.position is None
     assert video.released
 
 

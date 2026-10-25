@@ -72,6 +72,11 @@ def extract_frame(video_path, desired_time, output_dir):
             raise OSError(f"Error: Could not open video {video_path}")
 
         fps = video.get(cv2.CAP_PROP_FPS)
+        if fps <= 0:
+            # Without a frame rate, seconds cannot be turned into a frame number;
+            # multiplying by 0.0 would quietly save the first frame instead.
+            raise ValueError(f"Error: Could not read the frame rate of {video_path}.")
+
         total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
         frame_number = int(fps * desired_time)
