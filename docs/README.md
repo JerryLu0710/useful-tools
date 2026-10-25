@@ -7,4 +7,3 @@ This directory contains maintained reference material for Useful Tools.
 - [Documentation standard](standards/documentation.md)
 - [Tool guides](tools/)
 - [Architecture decisions](decisions/)
-- [Agent workflow](agent-workflow.md)

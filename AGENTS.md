@@ -33,4 +33,3 @@ Follow [the documentation standard](docs/standards/documentation.md).
 Code is the source of truth for command behavior, configuration keys, defaults, and outputs.
 Update the matching tool document whenever any of those change.
 Read [the architecture guide](docs/architecture.md) before changing shared configuration, logging, package structure, or dependency groups.
-Use [the agent workflow guide](docs/agent-workflow.md) only when task execution logging is requested.
