@@ -17,6 +17,7 @@ from ytmusic_dl.commands.download import (
     rename_title_only_files,
     render_filename_stem,
 )
+from ytmusic_dl.config import YTMusicDLConfig
 
 
 def test_download_prompt_on_duplicate_defaults_to_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -440,3 +441,25 @@ def test_download_command_renames_the_bare_file_before_downloading(
     assert [item["id"] for item in recorded] == ["old-id", "old-id", "new-id"]
     assert recorded[1]["file_path"] == str(output_path / "Song - The Beatles.mp3")
     assert recorded[2]["file_path"] == str(output_path / downloaded_name)
+
+
+def test_the_yt_dlp_options_the_loop_depends_on_survive_construction(tmp_path: Path) -> None:
+    """yt-dlp keeps unknown option names instead of rejecting them, so a renamed
+    option silently stops doing its job and a renamed postprocessor fails only
+    when a download starts. Build the real options and assert what the loop needs.
+    """
+    args = Namespace(quality="bestaudio", audio_format="mp3", no_thumbnail=False, no_metadata=False)
+
+    with yt_dlp.YoutubeDL(download_module._download_opts(args, tmp_path, {})) as ydl:
+        # download_command rewrites this entry per track, so it must stay a dict.
+        assert "default" in ydl.params["outtmpl"]
+        assert ydl.params["extract_flat"] == "discard_in_playlist"
+        assert ydl.params["ignoreerrors"] == "only_download"
+        assert ydl.params["js_runtimes"]
+        assert "ejs:github" in ydl.params["remote_components"]
+
+
+def test_the_default_quality_selector_still_parses() -> None:
+    """A malformed selector is otherwise only visible in the middle of a download."""
+    with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
+        assert ydl.build_format_selector(YTMusicDLConfig.DEFAULT_QUALITY)
