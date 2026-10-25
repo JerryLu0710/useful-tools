@@ -236,8 +236,4 @@ def main():
     setup_logger(args.log_level)
 
     # Execute command
-    args.func(args)
-
-
-if __name__ == "__main__":
-    main()
+    return args.func(args)

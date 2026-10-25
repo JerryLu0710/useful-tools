@@ -1,5 +1,4 @@
 import json
-import sys
 from argparse import Namespace
 
 from ytmusic_dl.common.logger import logger
@@ -79,7 +78,7 @@ def migrate_command(args):
 
     if not file_path.exists():
         logger.error(f"Error: '{file_path}' not found.")
-        sys.exit(1)
+        return 1
 
     # Auto-detect format by extension
     if file_path.suffix == ".jsonl":
@@ -91,7 +90,7 @@ def migrate_command(args):
 
     if not video_ids:
         logger.warning("No valid video IDs found to download.")
-        sys.exit(0)
+        return 0
 
     logger.info(f"Found {len(video_ids)} songs to redownload. Starting batch process...")
 
@@ -119,8 +118,10 @@ def migrate_command(args):
     )
 
     try:
-        download_command(fake_args)
+        status = download_command(fake_args) or 0
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
+        status = 1
 
-    logger.info("All songs have been processed.")
+    logger.info(f"All songs have been processed. Exit code {status}.")
+    return status

@@ -1,7 +1,6 @@
 import contextlib
 import json
 import logging
-import sys
 from datetime import datetime, timedelta
 from glob import escape
 from pathlib import Path
@@ -432,7 +431,7 @@ def download_command(args):
 
     if not all_videos:
         logger.warning("No videos found from the provided URLs. Exiting.")
-        return
+        return 1
 
     videos = all_videos
     if is_playlist:
@@ -576,14 +575,14 @@ def download_command(args):
                         failed_count += 1
                         failed_videos.append(f"{artist} - {title} ({video_id})")
                         if not is_playlist:
-                            sys.exit(1)
+                            return 1
                         continue
                 else:
                     logger.error(f"✗ Failed to download {video_id}: {e}")
                     failed_count += 1
                     failed_videos.append(f"{artist} - {title} ({video_id})")
                     if not is_playlist:
-                        sys.exit(1)
+                        return 1
                     continue
 
             try:
@@ -629,9 +628,9 @@ def download_command(args):
                 failed_count += 1
                 failed_videos.append(f"{artist} - {title} ({video_id})")
 
-                # Exit immediately for single video
+                # Stop immediately for a single video
                 if not is_playlist:
-                    sys.exit(1)
+                    return 1
 
         # Print summary for playlists or dry-run
         if is_playlist or args.dry_run:
@@ -648,3 +647,5 @@ def download_command(args):
                     logger.info("Failed videos:")
                     for video in failed_videos:
                         logger.info(f"  - {video}")
+
+    return 1 if failed_count else 0

@@ -1,11 +1,12 @@
 import shutil
 import subprocess
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
 
 from ytmusic_dl.commands import verify as verify_module
-from ytmusic_dl.commands.verify import extract_id_from_file
+from ytmusic_dl.commands.verify import extract_id_from_file, verify_command
 from ytmusic_dl.config import YTMusicDLConfig
 
 
@@ -51,3 +52,18 @@ def test_extract_id_from_file_scans_the_tags_an_opus_file_has(tmp_path: Path) ->
     )
 
     assert extract_id_from_file(audio, scan_all=True) == "dQw4w9WgXcQ"
+
+
+def test_verify_returns_failure_for_a_missing_backup_dir(tmp_path: Path) -> None:
+    """A command failure must come back as an exit code, not a swallowed None."""
+    assert (
+        verify_command(
+            Namespace(
+                backup_dir=tmp_path / "absent",
+                history=tmp_path / "history.jsonl",
+                scan_all=False,
+                download_missing=False,
+            )
+        )
+        == 1
+    )

@@ -462,7 +462,3 @@ def main(args: list[str] | None = None) -> int:
         return 1
     finally:
         logger.info("Complete")
-
-
-if __name__ == "__main__":
-    main()

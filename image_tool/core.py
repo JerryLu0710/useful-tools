@@ -1,6 +1,5 @@
 """Core logic for image tools."""
 
-import sys
 from pathlib import Path
 
 import cv2
@@ -16,8 +15,7 @@ def mark_coordinates(image_path, resize_ratio=None):
     """
     image = cv2.imread(image_path)
     if image is None:
-        logger.error("Unable to load image.")
-        sys.exit(1)
+        raise OSError(f"Unable to load image: {image_path}")
 
     display_image = image.copy()
 

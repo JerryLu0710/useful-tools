@@ -1,4 +1,3 @@
-import sys
 from collections import defaultdict
 
 from ytmusic_dl.commands.download import (
@@ -22,10 +21,10 @@ def rename_command(args):
 
     if not history_path.exists():
         logger.error(f"History file not found at '{history_path}'.")
-        sys.exit(1)
+        return 1
     if not output_path.exists():
         logger.error(f"Output directory not found at '{output_path}'.")
-        sys.exit(1)
+        return 1
 
     entries = load_history_entries(history_path)
     # Later lines supersede earlier ones for the same video ID, which is how a
@@ -66,7 +65,7 @@ def rename_command(args):
 
     if not shared:
         logger.info("No shared titles found; every filename is already unambiguous.")
-        return
+        return 0
 
     logger.info(f"Found {len(shared)} shared title(s) to unify in '{output_path}'.")
     renamed = sum(
@@ -83,3 +82,4 @@ def rename_command(args):
 
     verb = "Would rename" if args.dry_run else "Renamed"
     logger.info(f"{verb} {renamed} title-only file(s).")
+    return 0

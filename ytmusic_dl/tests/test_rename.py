@@ -89,11 +89,18 @@ def test_normalize_names_leaves_files_missing_from_history_alone(tmp_path: Path)
     assert len(history.read_text().splitlines()) == 1
 
 
-def test_normalize_names_exits_when_the_history_file_is_missing(tmp_path: Path) -> None:
+def test_normalize_names_fails_when_the_history_file_is_missing(tmp_path: Path) -> None:
     (tmp_path / "music").mkdir()
 
-    with pytest.raises(SystemExit):
-        rename_command(_args(tmp_path))
+    assert rename_command(_args(tmp_path)) == 1
+
+
+def test_main_returns_the_exit_code_of_its_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A command that returns 1 must reach the shell, not be swallowed by main."""
+    monkeypatch.setattr("sys.argv", ["ytmusic_dl", "normalize-names"])
+    monkeypatch.setattr(cli, "rename_command", lambda args: 1)
+
+    assert cli.main() == 1
 
 
 def test_normalize_names_applies_unless_dry_run_is_given(

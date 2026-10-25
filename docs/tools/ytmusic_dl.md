@@ -56,7 +56,8 @@ Files that were already named under the older rule are brought into line by `nor
 With `--browser` or `--cookies`, a track whose authenticated extraction or download fails is
 retried without cookies, trading Premium 256 kbps audio for guest streams. If both attempts fail
 the track is reported as failed: a single URL exits non-zero, while a playlist continues with the
-next track and lists the failures in its summary.
+next track and lists the failures in its summary. A playlist whose summary contains any failure
+also exits non-zero.
 
 ```bash
 uv run python -m ytmusic_dl download "https://music.youtube.com/playlist?list=PLAYLIST"

@@ -159,7 +159,3 @@ def main(args: list[str] | None = None) -> int:
     except Exception:
         logger.exception("---- UNHANDLED ERROR ----")
         return 1
-
-
-if __name__ == "__main__":
-    main()

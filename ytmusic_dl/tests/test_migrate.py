@@ -55,3 +55,7 @@ def test_migrate_command_passes_its_own_options_through(
     assert captured["quality"] == "bestaudio"
     assert captured["output"] == args.output
     assert captured["prompt_on_duplicate"] is False
+
+
+def test_migrate_returns_failure_for_a_missing_id_file(tmp_path: Path) -> None:
+    assert migrate_command(Namespace(file_path=tmp_path / "absent.jsonl")) == 1

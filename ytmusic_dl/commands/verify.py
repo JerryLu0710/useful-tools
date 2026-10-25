@@ -1,5 +1,4 @@
 import json
-import sys
 from argparse import Namespace
 from pathlib import Path
 
@@ -89,7 +88,7 @@ def extract_id_from_file(file_path: Path, scan_all: bool) -> str | None:
     return None
 
 
-def download_missing_songs(missing_ids: list[str]):
+def download_missing_songs(missing_ids: list[str]) -> int:
     """
     Downloads missing songs by calling the download command directly.
 
@@ -98,7 +97,7 @@ def download_missing_songs(missing_ids: list[str]):
     """
     if not missing_ids:
         logger.info("No missing songs to download.")
-        return
+        return 0
 
     logger.info("\n" + "=" * 50)
     logger.info(f"Attempting to download {len(missing_ids)} missing song(s)...")
@@ -126,10 +125,13 @@ def download_missing_songs(missing_ids: list[str]):
     )
 
     try:
-        download_command(fake_args)
-        logger.info("Download process completed successfully.")
+        status = download_command(fake_args) or 0
     except Exception as e:
         logger.error(f"An error occurred during the download process: {e}")
+        status = 1
+
+    logger.info(f"Download process finished with exit code {status}.")
+    return status
 
 
 def verify_command(args):
@@ -140,7 +142,7 @@ def verify_command(args):
 
     if not args.backup_dir.exists():
         logger.error(f"Backup directory not found at '{args.backup_dir}'")
-        sys.exit(1)
+        return 1
 
     logger.info(f"Scanning for audio files in '{args.backup_dir}'...")
     audio_files = (
@@ -152,7 +154,7 @@ def verify_command(args):
 
     if not audio_files:
         logger.warning("No audio files found in the backup directory.")
-        sys.exit(0)
+        return 0
 
     logger.info(f"Found {len(audio_files)} audio files to check.")
 
@@ -204,4 +206,6 @@ def verify_command(args):
 
     # Optionally download the missing songs
     if args.download_missing and missing_files:
-        download_missing_songs(list(missing_files.keys()))
+        return download_missing_songs(list(missing_files.keys()))
+
+    return 0
