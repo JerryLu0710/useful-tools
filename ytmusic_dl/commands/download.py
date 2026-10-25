@@ -8,11 +8,20 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import yt_dlp
+from mutagen import File as MutagenFile
+from yt_dlp.utils import sanitize_filename
 
 from ytmusic_dl.common.logger import logger
 from ytmusic_dl.common.utils import extract_artist
 
 HONG_KONG_TZ = ZoneInfo("Asia/Hong_Kong")
+
+# yt-dlp's own fallback chain for the artist field, so yt-dlp sanitises the value
+# instead of us interpolating a raw artist name into the template.
+ARTIST_TEMPLATE = "%(artist,channel,uploader)s"
+
+# Artist tag keys to read from an existing file, covering mp3, m4a and opus/webm.
+ARTIST_TAG_KEYS = ("TPE1", "\xa9ART", "----:com.apple.iTunes:ARTIST", "artist")
 
 AUDIO_FILE_EXTENSIONS = frozenset(
     {
@@ -47,31 +56,36 @@ def _build_js_opts() -> dict:
     }
 
 
-def load_history(history_path: Path) -> set[str]:
+def load_history_entries(history_path: Path) -> list[dict]:
     """
-    Load previously downloaded video IDs from JSONL history file.
+    Load history entries from JSONL history file.
+
+    Entries are returned in file order; later lines supersede earlier ones for
+    the same video ID, which is how renames are recorded without rewriting the
+    file.
 
     Args:
         history_path: Path to JSONL history file
 
     Returns:
-        Set of video IDs that have been downloaded
+        List of history entry dictionaries that carry a video ID
     """
-    downloaded_ids = set()
+    entries = []
 
     if not history_path.exists():
-        return downloaded_ids
+        return entries
 
     try:
         with open(history_path, encoding="utf-8") as f:
             for line in f:
                 if line.strip():
                     entry = json.loads(line)
-                    downloaded_ids.add(entry["id"])
+                    if entry.get("id"):
+                        entries.append(entry)
     except Exception as e:
         logger.warning(f"Error loading history file: {e}")
 
-    return downloaded_ids
+    return entries
 
 
 def append_to_history(history_path: Path, entry: dict):
@@ -132,9 +146,18 @@ def get_video_info(url: str, cookie_opts: dict | None = None) -> tuple[list[dict
         return [], False
 
 
-def find_existing_audio_files(output_path: Path, filename_stem: str) -> list[Path]:
-    """Return audio files whose filename stem exactly matches ``filename_stem``."""
-    pattern = f"{escape(filename_stem)}.*"
+def render_filename_stem(title: str, artist: str | None = None) -> str:
+    """Reproduce the filename stem yt-dlp writes for a title (and optional artist).
+
+    yt-dlp sanitises each field it substitutes into an output template, so a
+    title containing '/' or ':' is written differently from the raw title. Disk
+    lookups must compare against the written form or they miss the file.
+    """
+    return " - ".join(sanitize_filename(part) for part in (title, artist) if part)
+
+
+def _audio_files_matching(output_path: Path, pattern: str) -> list[Path]:
+    """Return audio files matched by a glob ``pattern``."""
     return [
         path
         for path in output_path.glob(pattern)
@@ -142,12 +165,103 @@ def find_existing_audio_files(output_path: Path, filename_stem: str) -> list[Pat
     ]
 
 
+def find_existing_audio_files(output_path: Path, filename_stem: str) -> list[Path]:
+    """Return audio files whose filename stem exactly matches ``filename_stem``."""
+    return _audio_files_matching(output_path, f"{escape(filename_stem)}.*")
+
+
+def find_same_title_files(output_path: Path, title: str) -> list[Path]:
+    """Return audio files named ``Title`` or ``Title - <artist>`` for ``title``.
+
+    shortcut: a title that itself contains ' - ' can match another title's
+    artist-suffixed file; the effect is one extra artist suffix, upgrade to
+    parsing the artist back out of the name if that ever matters.
+    """
+    stem = render_filename_stem(title)
+    return find_existing_audio_files(output_path, stem) + _audio_files_matching(
+        output_path, f"{escape(stem)} - *"
+    )
+
+
+def read_artist_tag(path: Path) -> str | None:
+    """Read the artist from an audio file's own tags, or None if unreadable."""
+    try:
+        audio_file = MutagenFile(path)
+    except Exception:
+        return None
+    if audio_file is None:
+        return None
+
+    # mutagen raises for keys a container does not support at all, so each key is
+    # tried on its own instead of wrapping the whole scan.
+    for key in ARTIST_TAG_KEYS:
+        try:
+            value = audio_file[key]
+        except Exception:
+            continue
+        text = str(value[0] if isinstance(value, list) else value).strip()
+        if text:
+            return text
+    return None
+
+
+def rename_title_only_files(
+    output_path: Path, title: str, entries_by_path: dict[str, dict], history_path: Path
+) -> None:
+    """Rename ``Title.ext`` files to ``Title - Artist.ext`` so a shared title uses
+    one naming scheme instead of a mix that depends on download order.
+
+    The artist comes from the history entry for that exact file, falling back to
+    the file's own tags. The rename is recorded by appending a superseding
+    history line, keeping the history file append-only.
+    """
+    stem = render_filename_stem(title)
+    for audio_file in find_existing_audio_files(output_path, stem):
+        entry = entries_by_path.get(str(audio_file))
+        artist = (entry or {}).get("artist") or read_artist_tag(audio_file)
+        if not artist:
+            logger.warning(
+                f"Cannot determine the artist of '{audio_file.name}'. Leaving it title-only."
+            )
+            continue
+
+        new_stem = render_filename_stem(title, artist)
+        if find_existing_audio_files(output_path, new_stem):
+            logger.warning(f"'{new_stem}' already exists. Leaving '{audio_file.name}' title-only.")
+            continue
+
+        new_audio = audio_file.with_name(new_stem + audio_file.name[len(stem) :])
+        # This glob deliberately takes every file with the stem, not just audio, so
+        # sidecars and thumbnails move with the track.
+        for path in output_path.glob(f"{escape(stem)}.*"):
+            if not path.is_file():
+                continue
+            new_path = path.with_name(new_stem + path.name[len(stem) :])
+            try:
+                path.rename(new_path)
+            except OSError as e:
+                logger.warning(f"Could not rename '{path.name}': {e}")
+                continue
+            logger.info(f"Renamed '{path.name}' to '{new_path.name}'")
+
+        if entry and new_audio.exists():
+            append_to_history(
+                history_path,
+                {
+                    **entry,
+                    "file_path": str(new_audio),
+                    "renamed_at": datetime.now(HONG_KONG_TZ).isoformat(),
+                },
+            )
+
+
 def confirm_duplicate_download(title: str, existing_files: list[Path]) -> bool:
     """Ask whether to download a same-title track as a separate file."""
     existing_names = ", ".join(path.name for path in existing_files)
     prompt = (
         f"Existing audio file(s) for '{title}' found: {existing_names}. "
-        "Download a separate artist-suffixed file? [y/N]: "
+        "Download a separate artist-suffixed file and rename the existing one to "
+        "match? [y/N]: "
     )
 
     try:
@@ -163,16 +277,17 @@ def build_duplicate_output_template(
     output_path: Path, title: str, artist: str, video_id: str
 ) -> str:
     """Build a collision-safe output template for a confirmed duplicate title."""
-    artist_stem = f"{title} - {artist}"
-    artist_files = find_existing_audio_files(output_path, artist_stem)
-    if artist_files:
+    artist_stem = render_filename_stem(title, artist)
+    if find_existing_audio_files(output_path, artist_stem):
         logger.info(
             "Artist-suffixed filename already exists; appending the video ID to keep the "
             "download separate."
         )
-        return str(output_path / f"%(title)s - {artist} [{video_id}].%(ext)s")
+        suffix = f" [{video_id}]"
+    else:
+        suffix = ""
 
-    return str(output_path / f"%(title)s - {artist}.%(ext)s")
+    return str(output_path / f"%(title)s - {ARTIST_TEMPLATE}{suffix}.%(ext)s")
 
 
 def download_command(args):
@@ -186,7 +301,11 @@ def download_command(args):
 
     # Load history
     logger.info(f"Loading history from {history_path}")
-    downloaded_ids = load_history(history_path)
+    history_entries = load_history_entries(history_path)
+    downloaded_ids = {entry["id"] for entry in history_entries}
+    entries_by_path = {
+        entry["file_path"]: entry for entry in history_entries if entry.get("file_path")
+    }
     if downloaded_ids:
         logger.info(f"Found {len(downloaded_ids)} previously downloaded tracks")
 
@@ -369,14 +488,21 @@ def download_command(args):
             # Dry run mode
             if args.dry_run:
                 logger.info(f"[{idx}/{len(videos)}] Would download: {artist} - {title}")
+                for path in find_existing_audio_files(output_path, render_filename_stem(title)):
+                    logger.info(f"    Would rename existing title-only file: {path.name}")
+                if find_same_title_files(output_path, title):
+                    logger.info(
+                        f"    Would save the new file as: {render_filename_stem(title, artist)}.*"
+                    )
                 continue
 
             # Normal download
             logger.info(f"[{idx}/{len(videos)}] Downloading: {artist} - {title}")
 
-            # If a file with the same title already exists, ask before using
-            # an artist-suffixed filename to avoid overwriting it.
-            existing_files = find_existing_audio_files(output_path, title)
+            # Rename before choosing the template: build_duplicate_output_template()
+            # picks the new filename from the directory, so a same-artist clash has to
+            # see the renamed file or it would be written over the older recording.
+            existing_files = find_same_title_files(output_path, title)
             if existing_files:
                 logger.info(
                     f"Found {len(existing_files)} existing audio file(s) with title '{title}'."
@@ -390,6 +516,8 @@ def download_command(args):
                     logger.info(f"Skipping duplicate-title track: {artist} - {title}")
                     skipped_count += 1
                     continue
+
+                rename_title_only_files(output_path, title, entries_by_path, history_path)
 
                 target_outtmpl = build_duplicate_output_template(
                     output_path, title, artist, video_id

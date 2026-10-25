@@ -77,7 +77,10 @@ def main():
         "--prompt-on-duplicate",
         action=argparse.BooleanOptionalAction,
         default=True,
-        help=("Prompt before downloading a same-title track as a separate file (default: enabled)"),
+        help=(
+            "Prompt before downloading a same-title track as a separate file and renaming "
+            "the existing title-only file to match (default: enabled)"
+        ),
     )
     download_parser.add_argument(
         "--no-thumbnail", action="store_true", help="Skip embedding thumbnail"

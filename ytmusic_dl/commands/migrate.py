@@ -58,7 +58,8 @@ def _read_ids_from_jsonl(path) -> list[str]:
             try:
                 entry = json.loads(line)
                 vid = entry.get("id")
-                if vid:
+                if vid and vid not in video_ids:
+                    # A rename appends a second line for the same ID, so keep one URL per ID.
                     video_ids.append(vid)
                 else:
                     logger.warning(f"Skipping JSONL entry without 'id': {line}")
