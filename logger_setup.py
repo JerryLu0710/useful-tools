@@ -36,7 +36,8 @@ class LoggerSetup:
             script_name = name.split(".")[-1] if "." in name else name
 
         logger = logging.getLogger(name)
-        logger.setLevel(Config.LOG_LEVEL)
+        # The file handler records everything, so the logger itself must pass DEBUG through.
+        logger.setLevel(logging.DEBUG if Config.LOG_TO_FILE else Config.LOG_LEVEL)
 
         # Prevent duplicate handlers
         if logger.handlers:
@@ -65,7 +66,7 @@ class LoggerSetup:
                 backupCount=Config.LOG_BACKUP_COUNT,
                 encoding=Config.DEFAULT_ENCODING,
             )
-            file_handler.setLevel(logging.DEBUG)  # File gets all messages
+            file_handler.setLevel(logging.DEBUG)
             file_handler.setFormatter(file_formatter)
             logger.addHandler(file_handler)
 

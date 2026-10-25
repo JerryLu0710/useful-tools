@@ -23,6 +23,14 @@ class LogLevel(Enum):
     CRITICAL = logging.CRITICAL
 
 
+def _log_level(name: str) -> int:
+    """Resolve a level name, with an error that names the setting instead of the enum."""
+    try:
+        return LogLevel[name.upper()].value
+    except KeyError:
+        raise ValueError(f"LOG_LEVEL must be one of: {', '.join(LogLevel.__members__)}") from None
+
+
 class Config:
     """Centralized configuration class."""
 
@@ -32,7 +40,7 @@ class Config:
     TEMP_DIRECTORY = PROJECT_ROOT / os.getenv("TEMP_DIRECTORY", "temp")
 
     # Logging configuration
-    LOG_LEVEL = getattr(LogLevel, os.getenv("LOG_LEVEL", "INFO").upper()).value
+    LOG_LEVEL = _log_level(os.getenv("LOG_LEVEL", "INFO"))
     LOG_TO_FILE = os.getenv("LOG_TO_FILE", "true").lower() == "true"
     LOG_TO_CONSOLE = os.getenv("LOG_TO_CONSOLE", "true").lower() == "true"
     LOG_MAX_FILE_SIZE = int(os.getenv("LOG_MAX_FILE_SIZE", 10485760))  # 10MB
@@ -59,8 +67,8 @@ class Config:
     @classmethod
     def ensure_directories(cls):
         """Create necessary directories if they don't exist."""
-        cls.LOG_DIRECTORY.mkdir(exist_ok=True)
-        cls.TEMP_DIRECTORY.mkdir(exist_ok=True)
+        cls.LOG_DIRECTORY.mkdir(parents=True, exist_ok=True)
+        cls.TEMP_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
     @classmethod
     def get_log_file_path(cls, script_name: str) -> Path:
