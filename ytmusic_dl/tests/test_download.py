@@ -182,6 +182,42 @@ def test_rename_title_only_files_leaves_file_alone_when_target_exists(tmp_path: 
     assert not (tmp_path / "history.jsonl").exists()
 
 
+def test_rename_title_only_files_renames_every_format_of_a_song(tmp_path: Path) -> None:
+    """Owning one song as both mp3 and m4a must not leave one of them title-only."""
+    mp3 = tmp_path / "Song.mp3"
+    m4a = tmp_path / "Song.m4a"
+    mp3.touch()
+    m4a.touch()
+    entries = {
+        str(mp3): _history_entry("id-1", "Song", "The Beatles", mp3),
+        str(m4a): _history_entry("id-2", "Song", "The Beatles", m4a),
+    }
+
+    rename_title_only_files(tmp_path, "Song", entries, tmp_path / "history.jsonl")
+
+    assert not mp3.exists()
+    assert not m4a.exists()
+    assert (tmp_path / "Song - The Beatles.mp3").exists()
+    assert (tmp_path / "Song - The Beatles.m4a").exists()
+
+
+def test_rename_title_only_files_does_not_rename_a_sidecar_over_an_existing_one(
+    tmp_path: Path,
+) -> None:
+    audio = tmp_path / "Song.mp3"
+    audio.touch()
+    (tmp_path / "Song.info.json").write_text("new")
+    kept = tmp_path / "Song - The Beatles.info.json"
+    kept.write_text("keep")
+    entry = _history_entry("old-id", "Song", "The Beatles", audio)
+
+    rename_title_only_files(tmp_path, "Song", {str(audio): entry}, tmp_path / "history.jsonl")
+
+    assert (tmp_path / "Song.info.json").read_text() == "new"
+    assert kept.read_text() == "keep"
+    assert (tmp_path / "Song - The Beatles.mp3").exists()
+
+
 @pytest.mark.parametrize("response", ["y", "YES"])
 def test_confirm_duplicate_download_accepts_yes(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, response: str

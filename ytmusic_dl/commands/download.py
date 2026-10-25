@@ -220,17 +220,23 @@ def rename_title_only_files(
             continue
 
         new_stem = render_filename_stem(title, artist)
-        if find_existing_audio_files(output_path, new_stem):
-            logger.warning(f"'{new_stem}' already exists. Leaving '{audio_file.name}' title-only.")
+        new_audio = audio_file.with_name(new_stem + audio_file.name[len(stem) :])
+        if new_audio.exists():
+            logger.warning(
+                f"'{new_audio.name}' already exists. Leaving '{audio_file.name}' title-only."
+            )
             continue
 
-        new_audio = audio_file.with_name(new_stem + audio_file.name[len(stem) :])
         # This glob deliberately takes every file with the stem, not just audio, so
-        # sidecars and thumbnails move with the track.
+        # sidecars and thumbnails move with the track. A sidecar whose target already
+        # exists is left behind rather than renamed over.
         for path in output_path.glob(f"{escape(stem)}.*"):
             if not path.is_file():
                 continue
             new_path = path.with_name(new_stem + path.name[len(stem) :])
+            if new_path.exists():
+                logger.warning(f"'{new_path.name}' already exists. Leaving '{path.name}' as it is.")
+                continue
             try:
                 path.rename(new_path)
             except OSError as e:
