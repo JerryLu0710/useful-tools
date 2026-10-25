@@ -33,11 +33,17 @@ def load_history(history_path: Path) -> set[str]:
 
     try:
         with open(history_path, encoding="utf-8") as f:
-            for line in f:
-                if line.strip():
+            for number, line in enumerate(f, 1):
+                if not line.strip():
+                    continue
+                try:
                     entry = json.loads(line)
-                    # Use title as unique identifier
-                    downloaded_titles.add(entry.get("title", ""))
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Could not parse line {number} of '{history_path}': {e}")
+                    continue
+                # Use title as unique identifier
+                if entry.get("title"):
+                    downloaded_titles.add(entry["title"])
     except Exception as e:
         logger.warning(f"Error loading history file: {e}")
 

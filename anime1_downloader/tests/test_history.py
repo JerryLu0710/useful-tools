@@ -47,19 +47,14 @@ class TestLoadHistory:
         assert result == {"Anime A [01]", "Anime A [02]", "Anime B [01]"}
 
     def test_load_history_with_malformed_lines(self, tmp_path: Path) -> None:
-        """Test loading history with some malformed JSON lines."""
+        """A half-written line must not hide the episodes recorded after it."""
         history_file = tmp_path / "history.jsonl"
         with open(history_file, "w", encoding="utf-8") as f:
             f.write('{"title": "Valid [01]"}\n')
             f.write("not valid json\n")
             f.write('{"title": "Valid [02]"}\n')
 
-        # Should not raise, but may log warning
-        result = load_history(history_file)
-
-        # Depending on implementation, could be partial or empty
-        # Current implementation catches exceptions so should return partial
-        assert "Valid [01]" in result or len(result) == 0
+        assert load_history(history_file) == {"Valid [01]", "Valid [02]"}
 
 
 class TestAppendToHistory:
