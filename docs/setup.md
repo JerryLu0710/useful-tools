@@ -1,234 +1,116 @@
-# Setup and Configuration Guide
+# Setup
 
-This guide covers the initial setup, environment configuration, and system-wide settings for the Useful Tools project.
+How to get the tools running from a clean checkout.
+Settings and their defaults are reference material: see [Configuration Reference](configuration.md).
+Why the project uses `uv` groups and `uv run`: see [Architecture](architecture.md#dependencies).
 
 ## Prerequisites
 
-- **Python**: Version 3.10 or higher
-- **uv**: Package and environment manager ([installation guide](https://github.com/astral-sh/uv))
+- **Python**: version 3.10 or higher
+- **uv**: package and environment manager ([installation guide](https://github.com/astral-sh/uv))
 
-## Initial Setup
+## Initial setup
 
-### 1. Clone the Repository
+### 1. Clone the repository
 
 ```bash
 git clone <repository-url>
 cd useful_tools
 ```
 
-### 2. Configure Environment Variables
-
-The project uses a `.env` file for configuration (e.g., log levels). Copy the example file to create your own local configuration:
+### 2. Create the local configuration
 
 ```bash
 cp .env.example .env
 ```
 
-You can then edit the `.env` file to customize settings.
+Edit `.env` afterwards to change any setting.
+The file is optional: every setting has a default.
 
-### 3. Install the Base Project
+### 3. Install the base project
 
-`uv` automatically creates and manages the virtual environment for you:
+`uv` creates and manages the virtual environment:
 
 ```bash
 uv sync
 ```
 
-This command:
-- ✅ Creates a `.venv` directory if it doesn't exist
-- ✅ Installs core dependencies from `pyproject.toml`
-- ✅ Updates `uv.lock` for reproducibility
-- ✅ Makes the project's packages available
+This creates `.venv` if it is missing, installs the core dependencies from `pyproject.toml`, and
+updates `uv.lock`. There is no virtual environment to create or activate by hand.
 
-> [!NOTE]
-> No need to manually create or activate a virtual environment! `uv sync` handles everything.
-
-### 4. Install Tool-Specific Dependencies
-
-To use a specific tool, install its dependency group:
+### 4. Install the dependencies of the tools you use
 
 ```bash
-# Install Chinese Converter dependencies
+# one tool
 uv sync --group chinese_converter
 
-# Install multiple tools
+# several tools
 uv sync --group chinese_converter --group ytmusic_dl
 
-# Install ALL tools
+# everything, including development tooling
 uv sync --all-groups
 ```
 
-### 5. Run Commands
-
-Use `uv run` to execute commands in the project environment:
+### 5. Run a command
 
 ```bash
-# Run a tool
 uv run python -m chinese_converter "file.epub"
-
-# Run ruff linting
-uv run ruff check ./
+uv run ruff check .
 ```
 
-> [!TIP]
-> `uv run` automatically uses the project's virtual environment, no need to activate it manually!
+`uv run` uses the project environment without activation.
 
-## Understanding the Modern uv Workflow
+## Paths on WSL
 
-### What is `uv sync`?
-
-`uv sync` synchronizes your project environment with the dependencies defined in:
-- `pyproject.toml` - Dependency declarations
-- `uv.lock` - Locked versions for reproducibility
-
-It's **faster** and more **reliable** than traditional `pip install`.
-
-### Dependency Groups
-
-Instead of optional dependencies, we use **dependency groups** (PEP 735):
-
-```toml
-[dependency-groups]
-chinese_converter = ["opencc-python-reimplemented~=0.1.7", ...]
-dev = ["ruff>=0.14.3"]
-```
-
-Install them with:
-```bash
-uv sync --group chinese_converter
-uv sync --group dev  # Install development tools
-```
-
-### Why `uv run`?
-
-`uv run` executes commands in the project's virtual environment **without manual activation**:
+To write to a Windows drive from WSL, give the path in WSL form:
 
 ```bash
-# Old way
-source .venv/bin/activate
-python -m chinese_converter "file.epub"
-
-# Modern way
-uv run python -m chinese_converter "file.epub"
-```
-
----
-
-## Configuration Reference
-
-The project uses a `.env` file for configuration. All settings are loaded by [`config.py`](../config.py) and made available to utilities.
-
-### General Project Settings
-
-#### Logging Configuration
-
-Control logging behavior across all utilities:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LOG_LEVEL` | `INFO` | Console and file logging level. Options: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |
-| `LOG_TO_FILE` | `true` | Enable file logging |
-| `LOG_TO_CONSOLE` | `true` | Enable console logging |
-| `LOG_DIRECTORY` | `logs` | Directory for log files (relative to project root) |
-| `LOG_MAX_FILE_SIZE` | `10485760` | Maximum log file size in bytes (10MB default) |
-| `LOG_BACKUP_COUNT` | `5` | Number of backup log files to keep |
-
-**How it works:**
-- The [`logger_setup.py`](../logger_setup.py) module provides a centralized logging system
-- Each utility gets its own log file (e.g., `logs/chinese_converter.log`)
-- Log files use rotation to prevent unlimited growth
-- Console output shows simplified messages; files contain detailed debug info
-
-**Example usage in your code:**
-```python
-from logger_setup import get_logger
-
-logger = get_logger(__name__)
-logger.info("This is an info message")
-```
-
-#### File Operations
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DEFAULT_ENCODING` | `utf-8` | Default file encoding |
-| `TEMP_DIRECTORY` | `temp` | Temporary files directory |
-| `TEMP_DIR_PREFIX` | `utility_temp_` | Prefix for temporary directories |
-
-### Tool-Specific Settings
-
-Each utility has its own configuration section. See the tool-specific documentation for details:
-
-- [Chinese Converter Configuration](tools/chinese_converter.md#configuration)
-- [Anime1 Downloader Configuration](tools/anime1_downloader.md#configuration)
-- [Image Tool Configuration](tools/image_tool.md#configuration)
-- [YouTube Music Downloader Configuration](tools/ytmusic_dl.md#configuration)
-
-## Special Considerations
-
-### WSL (Windows Subsystem for Linux) Users
-
-If you're using WSL and need to access Windows paths (e.g., `/mnt/c/...` or `/mnt/d/...`), configure the paths in your `.env` file:
-
-```bash
-# Example: point to a Windows drive from WSL
 YTMUSIC_DL_DOWNLOAD_DIR=/mnt/d/Music
 ```
 
-### Path Configuration
-
-When setting directory paths in `.env`:
-
-- **Absolute paths**: Recommended for directories outside the project
-    ```bash
-    ANIME1_DOWNLOAD_DIR=/home/user/videos
-    ```
-- **Relative paths**: Used for project-internal directories
-    ```bash
-    LOG_DIRECTORY=logs
-    ```
+The same directory is `D:\Music` on Windows, and recorded paths are not translated between the
+two. Pick one host per library and keep its convention.
 
 ## Troubleshooting
 
-### Issue: "Module not found" errors
+### "Module not found"
 
-**Solution**: Make sure you've installed the tool-specific dependencies:
+The tool's dependency group is not installed:
+
 ```bash
 uv sync --group chinese_converter
 ```
 
-### Issue: Logs not appearing
+### Logs not appearing
 
-**Solution**: Check these settings in `.env`:
-- `LOG_TO_FILE=true`
-- `LOG_TO_CONSOLE=true`
-- `LOG_LEVEL=INFO` (or lower for more verbose output)
+Check `LOG_TO_FILE`, `LOG_TO_CONSOLE` and `LOG_LEVEL` in `.env`.
+For more console detail set `LOG_LEVEL=DEBUG`; a tool's own log-level option cannot add detail
+beyond what `LOG_LEVEL` allows.
 
-### Issue: Permission denied when creating log files
+### Permission denied when creating log files
 
-**Solution**: Ensure the `LOG_DIRECTORY` path is writable:
+Make the log directory writable:
+
 ```bash
 mkdir -p logs
 chmod 755 logs
 ```
 
-### Issue: Environment variables not loading
+### Environment variables not loading
 
-**Solution**: 
-1. Verify `.env` file exists in the project root
-2. Check for syntax errors (no quotes needed around values)
-3. Run `uv sync` to ensure environment is up to date
-4. Restart your terminal/IDE after modifying `.env`
+1. Confirm `.env` exists in the project root, next to `config.py`.
+2. Check the syntax: values need no quotes.
+3. Start a new process. Settings are read at import, so a running command keeps the old values.
 
-### Issue: `uv sync` fails
+### `uv sync` fails
 
-**Solution**:
-1. Check `pyproject.toml` syntax (must be valid TOML)
-2. Update `uv` using its supported self-update mechanism.
-3. Recreate only the local `.venv` if it is invalid, then run `uv sync` again.
+1. Check that `pyproject.toml` is valid TOML.
+2. Update `uv` with its own self-update mechanism.
+3. Delete only the local `.venv` and run `uv sync` again.
 
-## Next Steps
+## Next steps
 
-- 📚 [View available tools](../README.md)
+- 📚 [Available tools](../README.md)
 - 🛠️ [Repository instructions](../AGENTS.md)
-- 🏗️ [Architecture guide](architecture.md)
+- 🏗️ [Architecture](architecture.md)
+- ⚙️ [Configuration reference](configuration.md)

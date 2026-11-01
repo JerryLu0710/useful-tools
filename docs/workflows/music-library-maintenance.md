@@ -52,4 +52,4 @@ See [Prune History](../tools/ytmusic_dl.md#prune-history).
 
 The line count of a history file is not the track count until step 4 has run.
 Count distinct video IDs, or the current line per ID, not raw lines.
-See [ADR 0001](../decisions/0001-append-only-history-with-explicit-pruning.md).
+See [ADR 0001](../adr/0001-append-only-history-with-explicit-pruning.md).

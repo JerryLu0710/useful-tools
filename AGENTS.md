@@ -19,6 +19,13 @@ uv run pytest
 
 Install only the dependency group needed for a single tool when full development dependencies are unnecessary.
 
+## Coding standards
+
+- Follow the single responsibility principle.
+- Use type hints for all functions.
+- Write Google-style docstrings.
+- Follow the Open/Closed Principle for extensibility.
+
 ## Change Rules
 
 - Keep tool-specific behavior inside its package.

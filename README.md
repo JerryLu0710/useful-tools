@@ -79,7 +79,9 @@ uv run python -m ytmusic_dl download "https://music.youtube.com/playlist?list=..
 
 | Document | Description |
 |----------|-------------|
-| [Setup & Configuration](docs/setup.md) | Installation, `.env`, and troubleshooting |
+| [Setup & Configuration](docs/setup.md) | Installation and troubleshooting |
+| [Configuration Reference](docs/configuration.md) | Every shared `.env` setting and its default |
+| [Tutorials](docs/tutorials/) | Learning-oriented walk-throughs that end with something working |
 | [Workflows](docs/workflows/) | Ordered command sequences for real data |
 | [Architecture](docs/architecture.md) | Package boundaries and shared conventions |
 | [Glossary](GLOSSARY.md) | Project-specific terms and the terms to avoid |
@@ -95,7 +97,7 @@ useful_tools/
 ├── docs/                    # Setup, architecture, and tool guides
 │   ├── tools/              # Tool-specific documentation
 │   ├── workflows/          # Ordered command procedures for real data
-│   ├── decisions/          # Architecture decision records
+│   ├── adr/                # Architecture decision records
 │   └── standards/          # Repository standards
 ├── GLOSSARY.md             # Project-specific vocabulary
 ├── chinese_converter/       # Chinese text conversion
@@ -119,7 +121,7 @@ useful_tools/
    [dependency-groups]
    my_tool = ["dependency1", "dependency2"]
    ```
-3. Create documentation: `docs/tools/my_tool.md`
+3. Create documentation: `docs/tools/my_tool.md`, following [the documentation standard](docs/standards/documentation.md)
 4. Update this README to include your tool
 
 ### Validation
@@ -136,10 +138,7 @@ uv run pytest
 
 ### Coding Standards
 
-- Follow **SRP** (Single Responsibility Principle)
-- Use **type hints** for all functions
-- Add **docstrings** (Google style)
-- See [AGENTS.md](AGENTS.md) for repository instructions
+The coding standards live in [AGENTS.md](AGENTS.md), alongside the change rules.
 
 ---
 
@@ -150,7 +149,6 @@ Contributions are welcome! Please:
 1. Follow the coding standards in [AGENTS.md](AGENTS.md)
 2. Update documentation for any new features
 3. Run linting before committing
-4. Follow the Open/Closed Principle for extensibility
 
 ---
 
@@ -163,6 +161,8 @@ This project is licensed under the MIT License.
 ## 🔗 Links
 
 - **Setup Guide**: [docs/setup.md](docs/setup.md)
+- **Configuration Reference**: [docs/configuration.md](docs/configuration.md)
+- **Tutorial**: [docs/tutorials/chinese_converter.md](docs/tutorials/chinese_converter.md)
 - **Workflows**: [docs/workflows/](docs/workflows/)
 - **Architecture**: [docs/architecture.md](docs/architecture.md)
 - **Tool Documentation**: [docs/tools/](docs/tools/)

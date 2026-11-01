@@ -18,6 +18,20 @@ uv sync --group ytmusic_dl
 Both values are optional.
 Use paths appropriate to the current shell, such as `/mnt/d/Music` in WSL.
 
+## Global option
+
+| Option | Purpose |
+| --- | --- |
+| `-l`, `--log-level LEVEL` | Minimum level the command logs at: `DEBUG`, `INFO`, `WARNING`, `ERROR`. Default: `INFO`. |
+
+It belongs to the program, not to a subcommand, so it goes before the subcommand name:
+`uv run python -m ytmusic_dl -l WARNING prune-history`.
+
+The option can only hide output, never add it. It sets the level of the tool's logger, while the
+console stream is filtered by the `LOG_LEVEL` environment variable, so a level below `LOG_LEVEL`
+changes nothing on screen. `DEBUG` and `INFO` are also indistinguishable for this tool: no code
+path in `ytmusic_dl` logs at `DEBUG`.
+
 ## Download
 
 ```bash
@@ -165,4 +179,4 @@ A rename is recorded by appending a later line with the same video ID and the ne
 the last line for an ID is the current one, and every earlier line for that ID is superseded.
 Commands read history through one shared helper so they all see the current line per ID.
 The history file is otherwise never rewritten in place; `prune-history` is the one command that
-replaces it, and it does so atomically. See [ADR 0001](../decisions/0001-append-only-history-with-explicit-pruning.md).
+replaces it, and it does so atomically. See [ADR 0001](../adr/0001-append-only-history-with-explicit-pruning.md).
