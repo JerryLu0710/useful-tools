@@ -1,7 +1,7 @@
 from argparse import Namespace
 
 from ytmusic_dl.common.logger import logger
-from ytmusic_dl.common.utils import load_history_entries
+from ytmusic_dl.common.utils import latest_history_by_id
 
 
 def _read_ids_from_txt(path) -> list[str]:
@@ -38,10 +38,10 @@ def _read_ids_from_txt(path) -> list[str]:
 
 
 def _read_ids_from_jsonl(path) -> list[str]:
-    """Read video IDs from a JSONL history file, keeping one entry per ID.
+    """Read video IDs from a JSONL history file, one per ID.
 
-    A rename appends a second line for the same ID, so each ID must become one
-    download URL.
+    A rename appends a superseding line for the same ID, so each ID must become
+    one download URL.
 
     Args:
         path: Path to the JSONL file.
@@ -49,7 +49,7 @@ def _read_ids_from_jsonl(path) -> list[str]:
     Returns:
         List of video ID strings, in file order.
     """
-    return list(dict.fromkeys(entry["id"] for entry in load_history_entries(path)))
+    return list(latest_history_by_id(path))
 
 
 def migrate_command(args):

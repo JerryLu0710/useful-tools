@@ -129,6 +129,23 @@ def test_rename_title_only_files_renames_sidecars_and_records_the_move(tmp_path:
     assert recorded[-1]["file_path"] == str(tmp_path / "Song [Live] - The Beatles.mp3")
 
 
+def test_rename_title_only_files_refreshes_the_path_lookup(tmp_path: Path) -> None:
+    audio = tmp_path / "Song.m4a"
+    audio.touch()
+    history_path = tmp_path / "history.jsonl"
+    entry = _history_entry("old-id", "Song", "The Beatles", audio)
+    history_path.write_text(json.dumps(entry) + "\n")
+    entries_by_path = {str(audio): entry}
+
+    rename_title_only_files(tmp_path, "Song", entries_by_path, history_path)
+
+    # A later title in the same run must find the file where it now lives, or it
+    # loses the history-supplied artist and falls back to reading tags.
+    assert str(audio) not in entries_by_path
+    moved = entries_by_path[str(tmp_path / "Song - The Beatles.m4a")]
+    assert moved["file_path"] == str(tmp_path / "Song - The Beatles.m4a")
+
+
 @pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg is required")
 @pytest.mark.parametrize(
     "suffix,artist", [(".mp3", "Daft Punk"), (".m4a", "AC/DC"), (".opus", "Thom Yorke")]

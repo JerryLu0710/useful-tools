@@ -55,6 +55,22 @@ def load_history_entries(history_path: Path) -> list[dict]:
     return entries
 
 
+def latest_from_entries(entries: list[dict]) -> dict[str, dict]:
+    """Collapse history entries to the current line for each video ID (last wins)."""
+    return {entry["id"]: entry for entry in entries}
+
+
+def latest_history_by_id(history_path: Path) -> dict[str, dict]:
+    """Return the current history entry for each video ID, in file order.
+
+    A rename appends a superseding line for the same ID, so the last line for an
+    ID is the current one and each earlier line names a path that no longer
+    exists. Read history through this function: iterating the raw file counts a
+    renamed track twice and hands back dead paths.
+    """
+    return latest_from_entries(load_history_entries(history_path))
+
+
 def tag_values(audio_file: Any, key: str) -> list[str]:
     """Return every text value stored under ``key`` of a mutagen tag object.
 

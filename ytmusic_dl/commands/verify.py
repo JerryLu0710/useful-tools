@@ -7,7 +7,7 @@ from ytmusic_dl.common.logger import logger
 from ytmusic_dl.common.utils import (
     AUDIO_FILE_EXTENSIONS,
     YOUTUBE_ID_REGEX,
-    load_history_entries,
+    latest_history_by_id,
     tag_values,
 )
 
@@ -32,7 +32,8 @@ def load_history_ids(history_path: Path) -> dict[str, str]:
         return {}
 
     downloaded = {
-        entry["id"]: entry.get("title", "Unknown") for entry in load_history_entries(history_path)
+        video_id: entry.get("title", "Unknown")
+        for video_id, entry in latest_history_by_id(history_path).items()
     }
     logger.info(f"Loaded {len(downloaded)} unique IDs from history file.")
     return downloaded

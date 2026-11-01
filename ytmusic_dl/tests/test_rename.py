@@ -6,6 +6,7 @@ import pytest
 
 from ytmusic_dl import cli
 from ytmusic_dl.commands.rename import rename_command
+from ytmusic_dl.common.utils import latest_history_by_id
 
 
 def _entry(video_id: str, title: str, artist: str, file_path: Path) -> dict:
@@ -63,6 +64,20 @@ def test_normalize_names_renames_nothing_on_a_second_run(tmp_path: Path) -> None
         "Song - The Beatles.m4a",
     ]
     assert len((tmp_path / "history.jsonl").read_text().splitlines()) == 3
+
+
+def test_normalize_names_history_has_one_current_entry_per_file(tmp_path: Path) -> None:
+    """The superseded line must not read as a second track or a dead path."""
+    _mixed_library(tmp_path)
+
+    rename_command(_args(tmp_path))
+
+    current = latest_history_by_id(tmp_path / "history.jsonl")
+    assert len(current) == 2
+    assert {Path(entry["file_path"]).name for entry in current.values()} == {
+        "Song - The Beatles.m4a",
+        "Song - Others.m4a",
+    }
 
 
 def test_normalize_names_dry_run_renames_nothing(tmp_path: Path) -> None:

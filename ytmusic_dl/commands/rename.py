@@ -5,7 +5,7 @@ from ytmusic_dl.commands.download import (
     rename_title_only_files,
 )
 from ytmusic_dl.common.logger import logger
-from ytmusic_dl.common.utils import AUDIO_FILE_EXTENSIONS, load_history_entries
+from ytmusic_dl.common.utils import AUDIO_FILE_EXTENSIONS, latest_history_by_id
 
 
 def rename_command(args):
@@ -25,14 +25,13 @@ def rename_command(args):
         logger.error(f"Output directory not found at '{output_path}'.")
         return 1
 
-    entries = load_history_entries(history_path)
-    # Later lines supersede earlier ones for the same video ID, which is how a
-    # previous rename recorded its new path.
-    latest_by_id = {entry["id"]: entry for entry in entries}
+    latest_by_id = latest_history_by_id(history_path)
     entries_by_path = {
         entry["file_path"]: entry for entry in latest_by_id.values() if entry.get("file_path")
     }
-    recorded_paths = {entry["file_path"] for entry in entries if entry.get("file_path")}
+    # A superseded line names a path that is no longer on disk, so the current
+    # lines are exactly the paths a file on disk can be recognised by.
+    recorded_paths = set(entries_by_path)
 
     ids_by_title = defaultdict(set)
     for entry in latest_by_id.values():

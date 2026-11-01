@@ -14,7 +14,7 @@ from ytmusic_dl.common.logger import logger
 from ytmusic_dl.common.utils import (
     AUDIO_FILE_EXTENSIONS,
     extract_artist,
-    load_history_entries,
+    latest_history_by_id,
     tag_values,
 )
 
@@ -172,7 +172,8 @@ def rename_title_only_files(
     case-insensitive filesystem a title-only file is reachable under another
     track's title casing, and the entry is what keeps the file's own casing.
     The rename is recorded by appending a superseding history line, keeping the
-    history file append-only.
+    history file append-only. ``entries_by_path`` is updated in place so the
+    caller's view of the directory stays aligned with the disk.
 
     Returns:
         The number of title-only files renamed, or would be renamed for dry_run
@@ -226,14 +227,16 @@ def rename_title_only_files(
         renamed += 1
         if dry_run or not entry:
             continue
-        append_to_history(
-            history_path,
-            {
-                **entry,
-                "file_path": str(new_audio),
-                "renamed_at": datetime.now(HONG_KONG_TZ).isoformat(),
-            },
-        )
+        updated = {
+            **entry,
+            "file_path": str(new_audio),
+            "renamed_at": datetime.now(HONG_KONG_TZ).isoformat(),
+        }
+        append_to_history(history_path, updated)
+        # Without this, a later title in the same run still looks the file up
+        # under its old path, finds nothing, and loses the history-supplied artist.
+        entries_by_path.pop(str(audio_file), None)
+        entries_by_path[str(new_audio)] = updated
     return renamed
 
 
@@ -365,10 +368,10 @@ def download_command(args):
 
     # Load history
     logger.info(f"Loading history from {history_path}")
-    history_entries = load_history_entries(history_path)
-    downloaded_ids = {entry["id"] for entry in history_entries}
+    latest_by_id = latest_history_by_id(history_path)
+    downloaded_ids = set(latest_by_id)
     entries_by_path = {
-        entry["file_path"]: entry for entry in history_entries if entry.get("file_path")
+        entry["file_path"]: entry for entry in latest_by_id.values() if entry.get("file_path")
     }
     if downloaded_ids:
         logger.info(f"Found {len(downloaded_ids)} previously downloaded tracks")
