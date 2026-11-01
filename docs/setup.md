@@ -229,6 +229,6 @@ chmod 755 logs
 
 ## Next Steps
 
-- 📚 [View available tools](../README.md#available-tools)
+- 📚 [View available tools](../README.md)
 - 🛠️ [Repository instructions](../AGENTS.md)
 - 🏗️ [Architecture guide](architecture.md)
