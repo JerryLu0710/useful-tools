@@ -26,7 +26,7 @@ dependencies = [
 dev = [
     "ruff>=0.14.3",
     "pytest>=8.0.0",
-    "pytest-cov>=4.0.0",
+    "pytest-cov>=7.1.0",
 ]
 
 # Dependencies for the chinese_converter tool
