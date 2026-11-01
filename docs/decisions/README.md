@@ -6,4 +6,6 @@ Use the filename format `NNNN-short-title.md`.
 
 Each decision record must state the context, the decision, alternatives considered, and consequences.
 
-There are no architecture decision records yet.
+## Records
+
+- [0001 - Append-only history with explicit pruning](0001-append-only-history-with-explicit-pruning.md)

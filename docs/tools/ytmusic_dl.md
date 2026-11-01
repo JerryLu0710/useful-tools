@@ -89,6 +89,39 @@ uv run python -m ytmusic_dl normalize-names -dr
 uv run python -m ytmusic_dl normalize-names -o /mnt/d/Music
 ```
 
+## Prune History
+
+```bash
+uv run python -m ytmusic_dl prune-history [options]
+```
+
+| Option | Purpose |
+| --- | --- |
+| `-hi`, `--history FILE` | History file to rewrite. |
+| `-dr`, `--dry-run` | Print the lines that would be dropped without touching the file. |
+
+Collapses the history file so each video ID keeps exactly one line: the last one written for
+that ID, which is the line carrying the current output path.
+Every earlier line for the same ID names a path a rename moved away from, so a reader that
+takes the file line by line counts a renamed track twice and reports output paths that no
+longer exist.
+Kept lines stay in the order their IDs first appeared.
+Each dropped line is logged with the path it carried and the path that was kept, so the count
+can be checked before applying.
+The rewrite goes through a temporary file and an atomic replace, so an interrupted run leaves
+the original file intact.
+
+Pruning refuses to run when the file holds lines it cannot read as entries, because those lines
+would be lost for good; repair them first and the command exits non-zero.
+A missing history file also exits non-zero.
+A file that already holds one line per ID is reported and left untouched.
+Blank lines are dropped along with the superseded ones.
+
+```bash
+uv run python -m ytmusic_dl prune-history -dr
+uv run python -m ytmusic_dl prune-history -hi /mnt/d/Music/history.jsonl
+```
+
 ## Verify
 
 ```bash
@@ -129,4 +162,7 @@ Duplicate-title prompting applies only to the direct `download` command; `migrat
 
 History records include the video ID, title, artist, download timestamp, output path, and available media metadata.
 A rename is recorded by appending a later line with the same video ID and the new output path;
-the history file is never rewritten, and the last line for an ID is the current one.
+the last line for an ID is the current one, and every earlier line for that ID is superseded.
+Commands read history through one shared helper so they all see the current line per ID.
+The history file is otherwise never rewritten in place; `prune-history` is the one command that
+replaces it, and it does so atomically. See [ADR 0001](../decisions/0001-append-only-history-with-explicit-pruning.md).

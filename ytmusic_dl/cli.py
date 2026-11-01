@@ -4,6 +4,7 @@ from pathlib import Path
 from ytmusic_dl.commands.download import download_command
 from ytmusic_dl.commands.metadata import metadata_command
 from ytmusic_dl.commands.migrate import migrate_command
+from ytmusic_dl.commands.prune_history import prune_history_command
 from ytmusic_dl.commands.rename import rename_command
 from ytmusic_dl.commands.verify import verify_command
 from ytmusic_dl.common.logger import logger
@@ -229,6 +230,26 @@ def main():
         help="Show the planned renames without renaming anything",
     )
     rename_parser.set_defaults(func=rename_command)
+
+    # --- Prune History Command (Offline History Maintenance) ---
+    prune_parser = subparsers.add_parser(
+        "prune-history",
+        help="Collapse history so each video ID keeps only its current line",
+    )
+    prune_parser.add_argument(
+        "-hi",
+        "--history",
+        type=Path,
+        default=YTMusicDLConfig.DEFAULT_HISTORY_FILE,
+        help=f"Path to JSONL history file (default: {YTMusicDLConfig.DEFAULT_HISTORY_FILE})",
+    )
+    prune_parser.add_argument(
+        "-dr",
+        "--dry-run",
+        action="store_true",
+        help="Report the lines that would be dropped without rewriting the file",
+    )
+    prune_parser.set_defaults(func=prune_history_command)
 
     args = parser.parse_args()
 
