@@ -80,7 +80,9 @@ uv run python -m ytmusic_dl download "https://music.youtube.com/playlist?list=..
 | Document | Description |
 |----------|-------------|
 | [Setup & Configuration](docs/setup.md) | Installation, `.env`, and troubleshooting |
+| [Workflows](docs/workflows/) | Ordered command sequences for real data |
 | [Architecture](docs/architecture.md) | Package boundaries and shared conventions |
+| [Glossary](GLOSSARY.md) | Project-specific terms and the terms to avoid |
 | [Repository Instructions](AGENTS.md) | Commands and contributor guidance |
 | [Documentation Index](docs/README.md) | All maintained documentation |
 
@@ -92,7 +94,10 @@ uv run python -m ytmusic_dl download "https://music.youtube.com/playlist?list=..
 useful_tools/
 ├── docs/                    # Setup, architecture, and tool guides
 │   ├── tools/              # Tool-specific documentation
+│   ├── workflows/          # Ordered command procedures for real data
+│   ├── decisions/          # Architecture decision records
 │   └── standards/          # Repository standards
+├── GLOSSARY.md             # Project-specific vocabulary
 ├── chinese_converter/       # Chinese text conversion
 ├── anime1_downloader/       # Anime1.me downloader
 ├── image_tool/             # Image/video utilities
@@ -158,6 +163,7 @@ This project is licensed under the MIT License.
 ## 🔗 Links
 
 - **Setup Guide**: [docs/setup.md](docs/setup.md)
+- **Workflows**: [docs/workflows/](docs/workflows/)
 - **Architecture**: [docs/architecture.md](docs/architecture.md)
 - **Tool Documentation**: [docs/tools/](docs/tools/)
 - **Repository Instructions**: [AGENTS.md](AGENTS.md)

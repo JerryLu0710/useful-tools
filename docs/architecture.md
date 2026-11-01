@@ -33,6 +33,9 @@ Tool-specific behavior should not be placed in shared modules unless at least tw
 The root `.env` file holds local configuration.
 Shared project artifacts such as logs use project-root-relative paths.
 Tool output locations state their own defaults and path semantics in the relevant tool guide.
+Some configured output directories sit on a synced or shared volume.
+A tool that keeps a history file puts it inside that same directory, so the file travels with the media and can be written from more than one device.
+Maintain such a history from one device at a time: a sync conflict in a history file costs more to untangle than an untidy one.
 
 ## Testing and CI
 

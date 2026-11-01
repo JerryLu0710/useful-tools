@@ -12,6 +12,8 @@ Use one canonical document for each topic.
 
 `README.md` explains what the repository provides and gives the shortest correct path to use it.
 `docs/setup.md` covers installation, environment configuration, and troubleshooting.
+`docs/workflows/` holds one file per procedure that chains a tool's commands against real data, and links to the tool guides for options instead of repeating them.
+Add a workflow only once it has actually been run; an unexercised procedure is not documented.
 `docs/architecture.md` describes package boundaries and shared conventions.
 `docs/tools/` contains one operational guide per tool.
 `docs/decisions/` records durable architectural decisions.
