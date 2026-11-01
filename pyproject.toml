@@ -33,13 +33,13 @@ dev = [
 chinese_converter = [
     "opencc-python-reimplemented~=0.1.7",
     "lxml>=4.9.0",
-    "beautifulsoup4>=4.14.3",
+    "beautifulsoup4>=4.15.0",
 ]
 
 # Dependencies for the anime1_downloader tool
 anime1_downloader = [
     "requests>=2.34.2",
-    "beautifulsoup4>=4.14.3",
+    "beautifulsoup4>=4.15.0",
     "lxml>=4.9.0",
     "yt-dlp>=2026.10.21",
     "rich>=15.0.0",
